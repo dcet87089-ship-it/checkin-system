@@ -919,7 +919,7 @@ export default function TeacherDashboard() {
                                     )}
                                   </td>
                                   <td className="p-4 text-center">
-                                    <span className="font-mono text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black bg-[#00b87c]/10 border border-[#00b87c]/30 px-2.5 py-1 rounded-lg inline-block">
+                                    <span className="font-mono text-xs font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold bg-[#00b87c]/10 border border-[#00b87c]/30 px-2.5 py-1 rounded-lg inline-block">
                                       ⏱️ {formatDuration(student.totalActiveSeconds)}
                                     </span>
                                   </td>

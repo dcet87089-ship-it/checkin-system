@@ -590,7 +590,7 @@ export default function StudentDashboard() {
   if (loading || !userData) return (
     <div className="min-h-screen glass-panel flex flex-col items-center justify-center gap-6">
       <div className="w-12 h-12 border-4 border-[#00b87c] border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black tracking-[0.2em] animate-pulse">LOADING SYSTEM...</p>
+      <p className="font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold tracking-[0.2em] animate-pulse">LOADING SYSTEM...</p>
     </div>
   );
 
@@ -606,9 +606,9 @@ export default function StudentDashboard() {
       statusMessage = "🚨 คุณปิด GPS! (ระบบแจ้งอาจารย์แล้ว / ถือว่าขาดเรียน)";
       distTextColor = "text-rose-500";
   } else if (dist <= 50) {
-      statusColor = "bg-[#00b87c]/10 text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
+      statusColor = "bg-[#00b87c]/10 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
       statusMessage = "✅ ระยะปลอดภัย (สถานะ: เข้าเรียน)";
-      distTextColor = "text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black";
+      distTextColor = "text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold";
   } else if (dist <= 100) {
       statusColor = "bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]";
       statusMessage = "⚠️ เริ่มออกห่างจากห้อง (สถานะ: เฝ้าระวัง)";
@@ -641,7 +641,7 @@ export default function StudentDashboard() {
         <div className="flex items-center gap-2">
           <span className="text-xl">📍</span>
           <div>
-            <h1 className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black leading-tight">CheckIn</h1>
+            <h1 className="text-base font-black text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold leading-tight">CheckIn</h1>
             <p className="text-[11px] text-gray-400 leading-none">{userData.name} ({userData.userId})</p>
           </div>
         </div>
@@ -682,7 +682,7 @@ export default function StudentDashboard() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="glass-panel animate-float-delayed border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">เพิ่มวิชาเรียนใหม่</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold">เพิ่มวิชาเรียนใหม่</h2>
               <button onClick={() => setShowAddCourseModal(false)} className="text-gray-300 hover:text-white transition-colors text-xl p-1">✕</button>
             </div>
 
@@ -730,7 +730,7 @@ export default function StudentDashboard() {
 
       {/* Desktop Sidebar (จอคอมพิวเตอร์และ iPad แนวนอน) */}
       <aside className="hidden md:flex md:w-64 glass-panel animate-float-delayed flex-col py-6 px-4 border-r border-gray-800 relative z-20 shrink-0">
-        <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black mb-8 mt-2 px-2 flex items-center gap-2">
+        <h1 className="text-lg font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold mb-8 mt-2 px-2 flex items-center gap-2">
           <span>📍</span> CheckIn
         </h1>
         
@@ -748,7 +748,7 @@ export default function StudentDashboard() {
 
         <div className="mt-auto pt-6 border-t border-gray-800">
           <div className="flex flex-col mb-4 px-2">
-            <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{userData.name}</p>
+            <p className="text-sm font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold">{userData.name}</p>
             <p className="text-xs text-gray-300 mt-1">{userData.userId}</p>
           </div>
           <button type="button" onClick={handleLogout} className="w-full flex items-center gap-3 text-gray-400 hover:text-gray-200 py-2 transition-colors text-sm font-medium">
@@ -767,7 +767,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveMenu('home')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'home'
-              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -779,7 +779,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveMenu('schedule')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'schedule'
-              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -791,7 +791,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveMenu('history')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'history'
-              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -934,7 +934,7 @@ export default function StudentDashboard() {
                     <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสม:</span>
-                        <span className="font-mono text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-black text-xs sm:text-sm">
+                        <span className="font-mono text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold font-black text-xs sm:text-sm">
                           {formatActiveDuration(currentStudents.find(s => s.studentId === userData.userId)?.totalActiveSeconds)}
                         </span>
                       </div>
@@ -970,7 +970,7 @@ export default function StudentDashboard() {
                     <button
                       type="button"
                       onClick={() => requestStudentGPS()}
-                      className="mt-4 text-xs text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
+                      className="mt-4 text-xs text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
                     >
                       🔄 แตะเพื่อรีเฟรชพิกัด GPS ของอุปกรณ์
                     </button>
@@ -988,7 +988,7 @@ export default function StudentDashboard() {
                   <div className="flex-1 p-3.5 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
                     {chatMessages.map((msg: ChatMessage, idx: number) => (
                       <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[88%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'glass-panel border border-gray-800 rounded-tl-none'}`}>
-                        {msg.sender !== 'System' && <p className={`text-[11px] mb-1 font-bold ${msg.sender === userData.name ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-300 font-normal ml-1.5">{msg.time}</span></p>}
+                        {msg.sender !== 'System' && <p className={`text-[11px] mb-1 font-bold ${msg.sender === userData.name ? 'text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-300 font-normal ml-1.5">{msg.time}</span></p>}
                         {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p className={`text-xs sm:text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>}
                       </div>
                     ))}
@@ -1027,7 +1027,7 @@ export default function StudentDashboard() {
                 
                 return (
                   <div key={day} className="glass-panel animate-float-delayed border border-gray-800 rounded-2xl p-5 flex flex-col">
-                    <h3 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black mb-4 pb-2 border-b border-gray-800 uppercase">{day}</h3>
+                    <h3 className="text-base font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold mb-4 pb-2 border-b border-gray-800 uppercase">{day}</h3>
                     
                     <div className="space-y-3 flex-1">
                       {daysSchedule.length === 0 ? (
@@ -1068,8 +1068,8 @@ export default function StudentDashboard() {
                  <p className="text-3xl font-bold text-white">{totalClasses} <span className="text-sm font-normal text-gray-300">คาบ</span></p>
                </div>
                <div className="bg-[#0e2920] border border-[#00b87c]/30 p-6 rounded-2xl text-center flex flex-col justify-center">
-                 <p className="text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black text-xs md:text-sm mb-2 font-medium">เข้าเรียน (เขียว)</p>
-                 <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{successClasses} <span className="text-sm font-normal text-emerald-800">คาบ</span></p>
+                 <p className="text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold text-xs md:text-sm mb-2 font-medium">เข้าเรียน (เขียว)</p>
+                 <p className="text-3xl font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold">{successClasses} <span className="text-sm font-normal text-emerald-800">คาบ</span></p>
                </div>
                <div className="bg-[#292211] border border-yellow-500/30 p-6 rounded-2xl text-center flex flex-col justify-center">
                  <p className="text-yellow-500 text-xs md:text-sm mb-2 font-medium">เฝ้าระวัง (เหลือง)</p>
@@ -1087,7 +1087,7 @@ export default function StudentDashboard() {
               <div className="xl:col-span-4 flex flex-col glass-panel animate-float-delayed p-6 rounded-2xl border border-gray-800">
                  <div className="flex justify-between items-center mb-6">
                     <button type="button" onClick={() => { setCalendarDate(new Date(currentYear, currentMonth - 1, 1)); setSelectedDate(null); }} className="w-8 h-8 rounded bg-gray-800/50 flex items-center justify-center text-gray-400 hover:text-white transition-colors">&lt;</button>
-                    <h3 className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{monthNamesThai[currentMonth]} {currentYear}</h3>
+                    <h3 className="font-bold text-lg text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold">{monthNamesThai[currentMonth]} {currentYear}</h3>
                     <button type="button" onClick={() => { setCalendarDate(new Date(currentYear, currentMonth + 1, 1)); setSelectedDate(null); }} className="w-8 h-8 rounded bg-gray-800/50 flex items-center justify-center text-gray-400 hover:text-white transition-colors">&gt;</button>
                  </div>
                  
@@ -1160,7 +1160,7 @@ export default function StudentDashboard() {
                                    <td className="p-4 sm:p-6 text-center text-gray-300 text-xs sm:text-sm">{record.time}</td>
                                    <td className="p-4 sm:p-6 text-center h-full align-middle">
                                       <div className="flex justify-center items-center w-full h-full pt-1">
-                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
+                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">🚫 {record.status}</span>}
                                       </div>
