@@ -817,7 +817,7 @@ export default function StudentDashboard() {
             
             {!joinedClass ? (
               <div className="glass-panel animate-float-delayed border border-gray-800 p-10 rounded-2xl max-w-2xl mx-auto shadow-sm">
-                <p className="text-gray-400 mb-6 text-center font-medium">เลือกวิธีเข้าเรียน (ระบบจะจับระยะห่าง GPS)</p>
+                <p className="text-gray-400 mb-6 text-center font-medium">เข้าเรียนด้วย QR-CODE หรือใส่รหัสห้อง</p>
                 
                 {/* กล่องแสดงสถานะ GPS ของนักศึกษา */}
                 <div className="glass-panel border border-gray-800 rounded-2xl p-4 sm:p-5 mb-6 text-sm shadow-sm">

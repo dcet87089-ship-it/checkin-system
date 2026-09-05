@@ -163,7 +163,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="email" 
-                  placeholder="name@example.com" 
+                  placeholder="name@gmail.com" 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm shadow-inner"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -183,7 +183,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'teacher' ? "ดร. สมชาย ใจดี" : "นายสมศักดิ์ ขยันเรียน"} 
+                  placeholder={role === 'teacher' ? "ชื่อจริง-นามสกุล" : "ชื่อจริง-นามสกุล"} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -203,7 +203,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'teacher' ? "T1001" : "66010001"} 
+                  placeholder={role === 'teacher' ? "T1001" : "รหัสนักศึกษา"} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
