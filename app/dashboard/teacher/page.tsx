@@ -58,29 +58,65 @@ export default function TeacherDashboard() {
   const [selectedSessionView, setSelectedSessionView] = useState<string>('all');
   const [configured, setConfigured] = useState(true);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'requesting' | 'ready' | 'denied'>('idle');
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
 
   const requestTeacherGPS = (): Promise<{ lat: number; lng: number } | null> => {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
+      if (typeof window === "undefined" || !navigator.geolocation) {
         alert("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับ GPS");
         setGpsStatus('denied');
         resolve(null);
         return;
       }
       setGpsStatus('requesting');
+
+      let isDone = false;
+
+      // ขั้นที่ 1: ขอพิกัดความแม่นยำสูง (ดาวเทียม) ภายใน 6 วินาที
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (isDone) return;
+          isDone = true;
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setTeacherLocation(loc);
+          setGpsAccuracy(Math.round(pos.coords.accuracy));
           setGpsStatus('ready');
           resolve(loc);
         },
         (err) => {
-          console.warn("GPS error:", err.message);
-          setGpsStatus('denied');
-          resolve(null);
+          if (isDone) return;
+          if (err.code === 1) { // PERMISSION_DENIED
+            isDone = true;
+            setGpsStatus('denied');
+            alert("⚠️ อาจารย์ยังไม่ได้อนุญาตการเข้าถึงตำแหน่ง GPS\n\nวิธีกดอนุญาตในเบราว์เซอร์:\n📱 บน Safari (iPhone/iPad): แตะปุ่ม 'aA' ด้านล่างหรือบนแถบ URL > การตั้งค่าเว็บไซต์ > ตำแหน่งที่ตั้ง > เลือก 'อนุญาต (Allow)'\n📱 บน Chrome: แตะไอคอนแม่กุญแจ 🔒 ข้าง URL > สิทธิ์ > ตำแหน่ง > เลือก 'อนุญาต (Allow)'");
+            resolve(null);
+            return;
+          }
+
+          // ขั้นที่ 2: ถ้าดาวเทียมในอาคาร Timeout ให้ดึงพิกัดจาก Cell Tower / WiFi ทันที
+          console.warn("Teacher high accuracy GPS timeout, trying cell/wifi network...", err.message);
+          navigator.geolocation.getCurrentPosition(
+            (fallbackPos) => {
+              if (isDone) return;
+              isDone = true;
+              const loc = { lat: fallbackPos.coords.latitude, lng: fallbackPos.coords.longitude };
+              setTeacherLocation(loc);
+              setGpsAccuracy(Math.round(fallbackPos.coords.accuracy));
+              setGpsStatus('ready');
+              resolve(loc);
+            },
+            (fallbackErr) => {
+              if (isDone) return;
+              isDone = true;
+              console.error("Teacher GPS failed completely:", fallbackErr.message);
+              setGpsStatus('denied');
+              alert("⚠️ ไม่สามารถรับตำแหน่ง GPS ได้ในขณะนี้ กรุณาเปิด 'Location' ในอุปกรณ์แล้วกดใหม่อีกครั้ง");
+              resolve(null);
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          );
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 15000 }
       );
     });
   };
@@ -662,30 +698,46 @@ export default function TeacherDashboard() {
 
                     {/* กล่องสถานะ GPS ของอาจารย์ */}
                     <div className="bg-[#11141c] border border-[#2a3041] rounded-2xl p-4 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-gray-300 flex items-center gap-2">
-                          📍 พิกัด GPS ห้องเรียน:
-                        </span>
-                        {teacherLocation.lat !== 0 ? (
-                          <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            พร้อมใช้งาน ({teacherLocation.lat.toFixed(4)}, {teacherLocation.lng.toFixed(4)})
-                          </span>
-                        ) : (
-                          <span className="text-amber-400 font-bold text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-                            {gpsStatus === 'requesting' ? 'กำลังขอพิกัด...' : 'ยังไม่ได้เชื่อมพิกัด'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-3 flex justify-end">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">📍</span>
+                          <div>
+                            <span className="font-bold text-gray-300 block text-xs">
+                              พิกัด GPS ห้องเรียนอาจารย์:
+                            </span>
+                            {teacherLocation.lat !== 0 ? (
+                              <span className="text-emerald-400 font-mono text-xs flex items-center gap-1 mt-0.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                {teacherLocation.lat.toFixed(5)}, {teacherLocation.lng.toFixed(5)} {gpsAccuracy ? `(±${gpsAccuracy}ม.)` : ''}
+                              </span>
+                            ) : (
+                              <span className="text-amber-400 text-xs mt-0.5 block">
+                                {gpsStatus === 'requesting' ? '⏳ กำลังขอสิทธิ์และค้นหาพิกัด...' : '⚠️ ยังไม่ได้ระบุพิกัด'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                         <button
                           type="button"
                           onClick={() => requestTeacherGPS()}
-                          className="text-xs text-blue-400 hover:text-blue-300 font-bold underline"
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow ${
+                            teacherLocation.lat !== 0
+                              ? 'bg-[#1c2130] text-blue-300 hover:bg-[#202636] border border-[#2a3041]'
+                              : 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
+                          }`}
                         >
-                          {teacherLocation.lat !== 0 ? '🔄 ตรวจจับพิกัด GPS ใหม่อีกครั้ง' : '👉 กดเพื่ออนุญาตสิทธิ์และระบุพิกัด GPS'}
+                          {teacherLocation.lat !== 0 ? '🔄 ตรวจจับใหม่อีกครั้ง' : '👉 แตะเพื่อเปิด GPS'}
                         </button>
                       </div>
+
+                      {gpsStatus === 'denied' && (
+                        <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                          <p className="font-bold mb-1">🚨 สิทธิ์พิกัดถูกบล็อกในเบราว์เซอร์:</p>
+                          <p className="text-[11px] text-rose-200">
+                            แตะที่ไอคอนกุญแจ 🔒 ข้าง URL หรือปุ่ม aA บนเบราว์เซอร์ เพื่อเปิดสิทธิ์ "ตำแหน่ง (Location)" แล้วกดใหม่อีกครั้ง
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <p className="text-red-400 text-xs mt-2">* ต้องเปิดพิกัด GPS ของอาจารย์ก่อนเริ่มคลาส เพื่อใช้เปรียบเทียบระยะห่างของนักศึกษา</p>

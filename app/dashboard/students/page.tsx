@@ -76,6 +76,7 @@ export default function StudentDashboard() {
   const [joinCodeInput, setJoinCodeInput] = useState("");
 
   const [myLocation, setMyLocation] = useState({ lat: 0, lng: 0 });
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [isGpsActive, setIsGpsActive] = useState(true);
   const [teacherLocation, setTeacherLocation] = useState({ lat: 0, lng: 0 });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -133,19 +134,26 @@ export default function StudentDashboard() {
     }
     setLoading(false);
 
-    if (typeof window !== "undefined" && navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setIsGpsActive(true);
-        },
-        (error: any) => {
-          console.warn("กำลังหาพิกัด GPS หรือถูกปิด...", error.message);
-          setIsGpsActive(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-      return () => navigator.geolocation.clearWatch(watchId);
+    // ตรวจสอบสิทธิ์ Geolocation ในเบราว์เซอร์อัตโนมัติ (ถ้าเคยอนุญาตแล้ว ให้ดึงพิกัดมารอ)
+    if (typeof window !== "undefined" && typeof navigator !== "undefined" && navigator.geolocation) {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((res) => {
+          if (res.state === 'granted') {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                setGpsAccuracy(Math.round(pos.coords.accuracy));
+                setIsGpsActive(true);
+                setGpsStatus('ready');
+              },
+              () => {},
+              { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+            );
+          } else if (res.state === 'denied') {
+            setGpsStatus('denied');
+          }
+        }).catch(() => {});
+      }
     }
   }, [router]);
 
@@ -184,30 +192,36 @@ export default function StudentDashboard() {
     alert("🚨 คุณถูกเด้งออกจากห้องเรียนทันที!\n\nสาเหตุ: มีการปิด GPS หรือไม่ยอมรับตำแหน่งพิกัดระหว่างเรียน\n\n📌 ระบบได้บันทึกเวลาเรียนสะสมไว้ให้แล้ว หากเปิด GPS แล้วเข้าห้องใหม่อีกครั้ง ระบบจะนับเวลาเรียนต่อกันทันที");
   };
 
+  // เมื่อเข้าห้องเรียน: ติดตามพิกัดต่อเนื่องด้วย watchPosition ที่เสถียร ไม่เด้งออกเพราะสัญญาณแกว่ง
+  useEffect(() => {
+    if (joinedClass && userData && typeof window !== "undefined" && navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setGpsAccuracy(Math.round(pos.coords.accuracy));
+          setIsGpsActive(true);
+        },
+        (err) => {
+          // ถ้าผู้ใช้กดปิด GPS ในเครื่อง หรือถอนสิทธิ์จริงๆ (PERMISSION_DENIED = code 1)
+          if (err.code === 1) {
+            console.warn("Student revoked GPS permission during class:", err.message);
+            setIsGpsActive(false);
+            handleEjectForGpsOff("ตรวจพบการปิด GPS ในระหว่างเรียน");
+          } else {
+            // ถ้าเป็น timeout หรือสัญญาณอ่อนในอาคาร ให้คงพิกัดเดิมไว้ ไม่เด้งออก
+            console.warn("Temporary GPS fluctuation indoors:", err.message);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, [joinedClass, userData]);
+
   // Heartbeat อัปเดตสถานะและคำนวณเวลาเรียนสะสมต่อเนื่องทุก 5 วินาที
   useEffect(() => {
     if (joinedClass && userData) {
       const interval = setInterval(async () => {
-        // ตรวจสอบสถานะ GPS อย่างต่อเนื่อง ถ้าปิดให้เด้งออกทันที
-        if (!navigator.geolocation) {
-          setIsGpsActive(false);
-          handleEjectForGpsOff("อุปกรณ์ไม่รองรับ GPS");
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            setIsGpsActive(true);
-          },
-          (err) => {
-            console.warn("Student closed GPS during class:", err.message);
-            setIsGpsActive(false);
-            handleEjectForGpsOff("ตรวจพบการปิด GPS ในระหว่างเรียน");
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-
         const nowMs = Date.now();
         const currentTime = new Date().toISOString();
         const distMeters = (teacherLocation.lat !== 0 && myLocation.lat !== 0 && isGpsActive)
@@ -329,19 +343,58 @@ export default function StudentDashboard() {
         return;
       }
       setGpsStatus('requesting');
+
+      let isDone = false;
+
+      // ขั้นที่ 1: พยายามขอพิกัด High Accuracy (ดาวเทียม GPS) ภายใน 6 วินาที
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (isDone) return;
+          isDone = true;
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setMyLocation(loc);
+          setGpsAccuracy(Math.round(pos.coords.accuracy));
+          setIsGpsActive(true);
           setGpsStatus('ready');
           resolve(loc);
         },
         (err) => {
-          console.warn("GPS error:", err.message);
-          setGpsStatus('denied');
-          resolve(null);
+          if (isDone) return;
+          // กรณีผู้ใช้กด "ไม่อนุญาต / Deny" ในเบราว์เซอร์ (PERMISSION_DENIED = code 1)
+          if (err.code === 1) {
+            isDone = true;
+            setGpsStatus('denied');
+            setIsGpsActive(false);
+            alert("⚠️ คุณปฏิเสธสิทธิ์การเข้าถึงตำแหน่ง GPS\n\nวิธีกดอนุญาตในเบราว์เซอร์:\n📱 บน Safari (iPhone/iPad): แตะปุ่ม 'aA' ด้านล่างหรือบนแถบ URL > การตั้งค่าเว็บไซต์ > ตำแหน่งที่ตั้ง > เลือก 'อนุญาต (Allow)'\n📱 บน Chrome (Android): แตะไอคอนกุญแจ 🔒 ข้าง URL > สิทธิ์ (Permissions) > ตำแหน่ง (Location) > เลือก 'อนุญาต (Allow)'");
+            resolve(null);
+            return;
+          }
+
+          // ขั้นที่ 2: สัญญาณดาวเทียมในอาคารอาจ Timeout หรือไม่พอ ให้ดึงพิกัดจาก Cell Tower / WiFi ทันที
+          console.warn("High accuracy satellite GPS timed out or unavailable, falling back to cell/wifi location...", err.message);
+          navigator.geolocation.getCurrentPosition(
+            (fallbackPos) => {
+              if (isDone) return;
+              isDone = true;
+              const loc = { lat: fallbackPos.coords.latitude, lng: fallbackPos.coords.longitude };
+              setMyLocation(loc);
+              setGpsAccuracy(Math.round(fallbackPos.coords.accuracy));
+              setIsGpsActive(true);
+              setGpsStatus('ready');
+              resolve(loc);
+            },
+            (fallbackErr) => {
+              if (isDone) return;
+              isDone = true;
+              console.error("GPS retrieval failed completely:", fallbackErr.message);
+              setGpsStatus('denied');
+              alert("⚠️ ไม่สามารถรับตำแหน่ง GPS ได้ในขณะนี้ กรุณาเปิด 'Location' ในแถบแจ้งเตือนของมือถือ แล้วกดใหม่อีกครั้ง");
+              resolve(null);
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          );
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 15000 }
       );
     });
   };
@@ -759,31 +812,49 @@ export default function StudentDashboard() {
                 <p className="text-gray-400 mb-6 text-center font-medium">เลือกวิธีเข้าเรียน (ระบบจะจับระยะห่าง GPS)</p>
                 
                 {/* กล่องแสดงสถานะ GPS ของนักศึกษา */}
-                <div className="bg-[#0d1017] border border-gray-800 rounded-2xl p-4 mb-6 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-gray-300 flex items-center gap-2">
-                      📍 พิกัด GPS เครื่องของคุณ:
-                    </span>
-                    {myLocation.lat !== 0 ? (
-                      <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        พร้อม ({myLocation.lat.toFixed(4)}, {myLocation.lng.toFixed(4)})
-                      </span>
-                    ) : (
-                      <span className="text-amber-400 font-bold text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-                        {gpsStatus === 'requesting' ? 'กำลังขอพิกัด...' : 'ยังไม่ได้เชื่อมต่อ GPS'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-3 flex justify-end">
+                <div className="bg-[#0d1017] border border-gray-800 rounded-2xl p-4 sm:p-5 mb-6 text-sm shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📍</span>
+                      <div>
+                        <span className="font-bold text-gray-200 block text-xs sm:text-sm">
+                          พิกัด GPS บนอุปกรณ์ของคุณ:
+                        </span>
+                        {myLocation.lat !== 0 ? (
+                          <span className="text-emerald-400 font-mono text-xs flex items-center gap-1.5 mt-0.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {myLocation.lat.toFixed(5)}, {myLocation.lng.toFixed(5)} {gpsAccuracy ? `(±${gpsAccuracy}ม.)` : ''}
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 text-xs mt-0.5 block">
+                            {gpsStatus === 'requesting' ? '⏳ กำลังขอสิทธิ์และรับพิกัดจากเครื่อง...' : '⚠️ ยังไม่ได้รับพิกัด GPS'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
                     <button
                       type="button"
                       onClick={() => requestStudentGPS()}
-                      className="text-xs text-[#00b87c] hover:underline font-bold"
+                      className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow ${
+                        myLocation.lat !== 0 
+                          ? 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700' 
+                          : 'bg-[#00b87c] hover:bg-[#00a36e] text-white animate-pulse'
+                      }`}
                     >
-                      {myLocation.lat !== 0 ? '🔄 ตรวจจับพิกัดใหม่' : '👉 แตะเพื่ออนุญาตสิทธิ์ GPS'}
+                      {myLocation.lat !== 0 ? '🔄 รีเฟรชพิกัดใหม่' : '👉 แตะที่นี่เพื่อเปิด GPS (เบราว์เซอร์จะเด้งถาม)'}
                     </button>
                   </div>
+
+                  {gpsStatus === 'denied' && (
+                    <div className="mt-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                      <p className="font-bold mb-1">🚨 เบราว์เซอร์ยังไม่ได้รับอนุญาตสิทธิ์พิกัดตำแหน่ง:</p>
+                      <p className="text-[11px] text-rose-200 leading-relaxed">
+                        • <strong>iPhone / iPad (Safari):</strong> แตะที่ปุ่ม <span className="bg-rose-950 px-1 py-0.5 rounded font-mono">aA</span> ด้านล่างหรือบนแถบ URL &gt; การตั้งค่าเว็บไซต์ &gt; ตำแหน่งที่ตั้ง &gt; เลือก <strong>อนุญาต (Allow)</strong><br />
+                        • <strong>Android (Chrome):</strong> แตะที่ไอคอนกุญแจ <span className="bg-rose-950 px-1 py-0.5 rounded font-mono">🔒</span> ข้าง URL &gt; สิทธิ์ (Permissions) &gt; ตำแหน่ง &gt; เลือก <strong>อนุญาต (Allow)</strong>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {isScanning ? (
