@@ -72,7 +72,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#1a0b2e] via-[#0d071a] to-[#040f25] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] relative overflow-hidden">
       
       {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -227,13 +227,13 @@ export default function RegisterPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full font-black py-4 rounded-2xl transition-all duration-300 shadow-lg transform hover:-translate-y-0.5 text-sm uppercase tracking-wider mt-4 ${
+              className={`w-full font-black py-4 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 active:translate-y-2 text-sm uppercase tracking-wider mt-4 ${
                 role === 'teacher'
-                  ? 'bg-gradient-to-r from-[#ff00a0] to-[#7a00ff] text-white shadow-[0_0_25px_rgba(255,0,160,0.4)] hover:shadow-[0_0_35px_rgba(255,0,160,0.6)]'
-                  : 'bg-gradient-to-r from-[#00e5ff] to-[#3b82f6] text-white shadow-[0_0_25px_rgba(0,229,255,0.4)] hover:shadow-[0_0_35px_rgba(0,229,255,0.6)]'
+                  ? 'bg-gradient-to-r from-[#ff00a0] to-[#7a00ff] text-white shadow-[0_6px_0_0_#9d174d,0_15px_25px_rgba(255,0,160,0.4)] hover:shadow-[0_8px_0_0_#9d174d,0_15px_35px_rgba(255,0,160,0.6)] active:shadow-[0_0px_0_0_#9d174d,0_0px_0px_rgba(255,0,160,0)]'
+                  : 'bg-gradient-to-r from-[#00e5ff] to-[#3b82f6] text-white shadow-[0_6px_0_0_#1e3a8a,0_15px_25px_rgba(0,229,255,0.4)] hover:shadow-[0_8px_0_0_#1e3a8a,0_15px_35px_rgba(0,229,255,0.6)] active:shadow-[0_0px_0_0_#1e3a8a,0_0px_0px_rgba(0,229,255,0)]'
               } disabled:opacity-50`}
             >
-              {loading ? "กำลังลงทะเบียน..." : `ลงทะเบียนเป็น${role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}`}
+              {loading ? "กำลังบันทึกข้อมูล..." : `สมัครบัญชี${role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}`}
             </button>
           </form>
 

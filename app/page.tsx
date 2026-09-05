@@ -72,7 +72,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#1a0b2e] via-[#0d071a] to-[#040f25] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] relative overflow-hidden">
       
       {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -160,9 +160,9 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-white text-[#0d0b14] hover:bg-gray-200 font-extrabold py-4 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_50px_rgba(255,255,255,0.5)] transform hover:-translate-y-1 disabled:opacity-50 tracking-wider"
+              className="w-full bg-white text-[#0d0b14] hover:bg-gray-200 font-extrabold py-4 rounded-full transition-all duration-300 shadow-[0_6px_0_0_#9ca3af,0_15px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_8px_0_0_#9ca3af,0_15px_40px_rgba(255,255,255,0.3)] active:translate-y-2 active:shadow-[0_0px_0_0_#9ca3af,0_0px_0px_rgba(255,255,255,0)] transform hover:-translate-y-1 disabled:opacity-50 tracking-wider"
             >
-              {loading ? "กำลังตรวจสอบข้อมูล..." : "LOGIN"}
+              {loading ? "กำลังเข้าสู่ระบบ..." : "LOGIN"}
             </button>
           </form>
 
