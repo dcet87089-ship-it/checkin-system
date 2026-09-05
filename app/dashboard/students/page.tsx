@@ -573,16 +573,34 @@ export default function StudentDashboard() {
   const errorClasses = historyData.filter(h => h.type === 'error').length; 
 
   return (
-    <div className="flex min-h-screen bg-[#0d1017] text-gray-200 font-sans relative">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#0d1017] text-gray-200 font-sans relative">
       
-      {/* แบนเนอร์แจ้งเตือนฉุกเฉินเมื่อนักศึกษาปิด GPS ระหว่างเรียน */}
+      {/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
+      <header className="md:hidden bg-[#151822] border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">📍</span>
+          <div>
+            <h1 className="text-base font-black text-[#00b87c] leading-tight">CheckIn</h1>
+            <p className="text-[11px] text-gray-400 leading-none">{userData.name} ({userData.userId})</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          onClick={handleLogout}
+          className="text-xs bg-gray-800/80 hover:bg-rose-900/40 border border-gray-700 hover:border-rose-500/50 text-gray-300 hover:text-rose-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 font-semibold"
+        >
+          <span>🚪</span> ออกจากระบบ
+        </button>
+      </header>
+
+      {/* แถบแจ้งเตือนฉุกเฉินเมื่อนักศึกษาปิด GPS ระหว่างเรียน */}
       {isGpsOff && joinedClass && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 border-2 border-white text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 max-w-xl w-[92%] animate-bounce">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🚨</span>
+        <div className="fixed top-16 md:top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 border-2 border-white text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 sm:gap-4 max-w-xl w-[92%] animate-bounce">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl">🚨</span>
             <div>
-              <p className="font-black text-base">ระบบตรวจพบว่าคุณ "ปิด GPS"!</p>
-              <p className="text-xs text-rose-100">สถานะถูกส่งแจ้งเตือนอาจารย์แล้ว กรุณากดเปิดสิทธิ์ GPS ทันทีเพื่อรักษาสิทธิ์การเข้าเรียน</p>
+              <p className="font-black text-xs sm:text-base">ระบบตรวจพบว่าคุณ "ปิด GPS"!</p>
+              <p className="text-[10px] sm:text-xs text-rose-100">ส่งแจ้งเตือนอาจารย์แล้ว กรุณากดเปิดสิทธิ์ GPS ทันทีเพื่อรักษาสิทธิ์</p>
             </div>
           </div>
           <button
@@ -591,7 +609,7 @@ export default function StudentDashboard() {
               const loc = await requestStudentGPS();
               if (loc && loc.lat !== 0) setIsGpsActive(true);
             }}
-            className="bg-white text-rose-600 font-black text-xs px-4 py-2.5 rounded-xl whitespace-nowrap hover:bg-rose-50 shadow transition-colors"
+            className="bg-white text-rose-600 font-black text-[11px] sm:text-xs px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl whitespace-nowrap hover:bg-rose-50 shadow transition-colors"
           >
             เปิด GPS ทันที
           </button>
@@ -601,27 +619,27 @@ export default function StudentDashboard() {
       {/* Modal เพิ่มวิชาเรียน */}
       {showAddCourseModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#151822] border border-gray-800 p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
+          <div className="bg-[#151822] border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-[#00b87c]">เพิ่มวิชาเรียนใหม่</h2>
-              <button onClick={() => setShowAddCourseModal(false)} className="text-gray-500 hover:text-white transition-colors">✕</button>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#00b87c]">เพิ่มวิชาเรียนใหม่</h2>
+              <button onClick={() => setShowAddCourseModal(false)} className="text-gray-500 hover:text-white transition-colors text-xl p-1">✕</button>
             </div>
 
-            <form onSubmit={handleSaveCourse} className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSaveCourse} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-400 mb-2 block">รหัสวิชา</label>
-                  <input name="code" placeholder="CPE101" className="w-full p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white" required />
+                  <label className="text-sm font-medium text-gray-400 mb-1.5 block">รหัสวิชา</label>
+                  <input name="code" placeholder="CPE101" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-400 mb-2 block">ชื่อวิชา</label>
-                  <input name="name" placeholder="Programming" className="w-full p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white" required />
+                  <label className="text-sm font-medium text-gray-400 mb-1.5 block">ชื่อวิชา</label>
+                  <input name="name" placeholder="Programming" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
                 </div>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-400 mb-2 block">วันเรียน</label>
-                <select name="day" className="w-full p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white cursor-pointer" required>
+                <label className="text-sm font-medium text-gray-400 mb-1.5 block">วันเรียน</label>
+                <select name="day" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white cursor-pointer text-sm sm:text-base" required>
                   <option value="Monday">วันจันทร์</option>
                   <option value="Tuesday">วันอังคาร</option>
                   <option value="Wednesday">วันพุธ</option>
@@ -630,18 +648,18 @@ export default function StudentDashboard() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-400 mb-2 block">เวลา</label>
-                  <input name="time" placeholder="09:00 - 12:00" className="w-full p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white" />
+                  <label className="text-sm font-medium text-gray-400 mb-1.5 block">เวลา</label>
+                  <input name="time" placeholder="09:00 - 12:00" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-400 mb-2 block">สถานที่</label>
-                  <input name="location" placeholder="ห้อง 401" className="w-full p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white" />
+                  <label className="text-sm font-medium text-gray-400 mb-1.5 block">สถานที่</label>
+                  <input name="location" placeholder="ห้อง 401" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0d1017] border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-[#00b87c] hover:bg-[#00a36e] text-white p-4 rounded-xl font-bold text-lg mt-4 transition-all">
+              <button type="submit" className="w-full bg-[#00b87c] hover:bg-[#00a36e] text-white p-3.5 sm:p-4 rounded-xl font-bold text-base sm:text-lg mt-4 transition-all">
                 บันทึกตารางเรียน
               </button>
             </form>
@@ -649,9 +667,11 @@ export default function StudentDashboard() {
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className="w-64 bg-[#151822] flex flex-col py-6 px-4 border-r border-gray-800 relative z-20">
-        <h1 className="text-lg font-bold text-[#00b87c] mb-8 mt-2 px-2">เมนูนักศึกษา</h1>
+      {/* Desktop Sidebar (จอคอมพิวเตอร์และ iPad แนวนอน) */}
+      <aside className="hidden md:flex md:w-64 bg-[#151822] flex-col py-6 px-4 border-r border-gray-800 relative z-20 shrink-0">
+        <h1 className="text-lg font-bold text-[#00b87c] mb-8 mt-2 px-2 flex items-center gap-2">
+          <span>📍</span> CheckIn
+        </h1>
         
         <div className="space-y-2 flex-1">
           <button type="button" onClick={() => setActiveMenu('home')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'home' ? 'bg-[#00b87c] text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
@@ -677,10 +697,50 @@ export default function StudentDashboard() {
             ออกจากระบบ
           </button>
         </div>
-      </div>
+      </aside>
+
+      {/* Mobile Bottom Navigation Bar (แถบเมนูล่างสำหรับสมาร์ทโฟน/แท็บเล็ต) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#151822]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around items-center py-2 px-3 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <button
+          type="button"
+          onClick={() => setActiveMenu('home')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'home'
+              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">📱</span>
+          <span className="text-[11px] mt-1">เข้าเรียน</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMenu('schedule')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'schedule'
+              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">📅</span>
+          <span className="text-[11px] mt-1">ตารางเรียน</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMenu('history')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'history'
+              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">📊</span>
+          <span className="text-[11px] mt-1">ประวัติ</span>
+        </button>
+      </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-6 md:p-10 overflow-y-auto h-screen scroll-smooth">
+      <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto min-h-screen md:h-screen pb-24 md:pb-10 scroll-smooth">
         {!configured && (
           <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
             ⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code>
@@ -763,58 +823,39 @@ export default function StudentDashboard() {
                 </form>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                 
-                {/* Chat Panel */}
-                <div className="lg:col-span-1 bg-[#151822] border border-gray-800 rounded-2xl flex flex-col overflow-hidden h-[600px]">
-                  <div className="p-4 border-b border-gray-800 bg-[#1a1d27]">
-                    <h3 className="font-bold text-white text-sm">💬 แชทห้องเรียน</h3>
-                  </div>
-                  <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-                    {chatMessages.map((msg: ChatMessage, idx: number) => (
-                      <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[85%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'bg-[#0d1017] border border-gray-800 rounded-tl-none'}`}>
-                        {msg.sender !== 'System' && <p className={`text-xs mb-1 font-bold ${msg.sender === userData.name ? 'text-[#00b87c]' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-500 font-normal ml-2">{msg.time}</span></p>}
-                        {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p className={`text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>}
-                      </div>
-                    ))}
-                  </div>
-                  <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800 bg-[#1a1d27] flex gap-2">
-                    <input name="message" placeholder="ข้อความ..." className="flex-1 bg-[#0d1017] border border-gray-800 rounded-xl px-4 py-2 focus:outline-none focus:border-[#00b87c] text-white text-sm" required />
-                    <button type="submit" className="bg-[#00b87c] hover:bg-[#00a36e] px-4 rounded-xl font-bold text-white transition-colors">ส่ง</button>
-                  </form>
-                </div>
-
-                {/* Tracking Panel */}
-                <div className="lg:col-span-2 bg-[#151822] border border-gray-800 rounded-2xl p-8 flex flex-col relative overflow-hidden">
+                {/* Tracking Panel (แสดงเป็นอันดับแรกบนมือถือและแท็บเล็ต) */}
+                <div className="order-1 lg:order-2 lg:col-span-2 bg-[#151822] border border-gray-800 rounded-2xl p-5 sm:p-8 flex flex-col relative overflow-hidden shadow-xl">
                   <div className="absolute top-0 left-0 w-full h-1 bg-[#00b87c]"></div>
                   
-                  <div className="flex justify-between items-start mb-8">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-6 sm:mb-8">
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                        <h2 className="text-sm font-bold text-red-400">กำลังติดตามตำแหน่ง...</h2>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                        <h2 className="text-xs sm:text-sm font-bold text-red-400">กำลังติดตามตำแหน่ง Live GPS</h2>
                       </div>
-                      <h3 className="text-4xl font-black text-white">{joinedClass.code}</h3>
+                      <h3 className="text-2xl sm:text-4xl font-black text-white">{joinedClass.code}</h3>
                     </div>
-                    <button type="button" onClick={handleLeaveRoom} className="bg-gray-800/50 hover:bg-red-500/20 border border-transparent hover:border-red-500/50 text-gray-400 hover:text-red-400 px-4 py-2 rounded-lg font-bold transition-all text-sm">
-                       ออกจากการติดตาม
+                    <button type="button" onClick={handleLeaveRoom} className="bg-gray-800/80 hover:bg-red-500/20 border border-gray-700 hover:border-red-500/50 text-gray-300 hover:text-red-400 px-3.5 py-2 rounded-xl font-bold transition-all text-xs sm:text-sm shadow">
+                       🚪 ออกจากการติดตาม
                     </button>
                   </div>
 
-                  <div className="bg-[#0d1017] rounded-2xl p-10 text-center border border-gray-800 flex-1 flex flex-col justify-center items-center relative">
-                    <p className="text-gray-400 mb-2 font-medium">ระยะห่างจากอาจารย์ในห้องเรียน</p>
-                    <p className={`text-7xl font-black mb-4 ${distTextColor}`}>
-                      {dist.toFixed(0)} <span className="text-2xl text-gray-500 font-normal ml-1">ม.</span>
+                  <div className="bg-[#0d1017] rounded-2xl p-6 sm:p-10 text-center border border-gray-800 flex-1 flex flex-col justify-center items-center relative shadow-inner">
+                    <p className="text-gray-400 mb-1 font-medium text-xs sm:text-sm">ระยะห่างจากอาจารย์ในห้องเรียน</p>
+                    <p className={`text-5xl sm:text-7xl font-black mb-3 ${distTextColor}`}>
+                      {dist.toFixed(0)} <span className="text-xl sm:text-2xl text-gray-500 font-normal ml-1">ม.</span>
                     </p>
-                    <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold border ${statusColor} mb-6`}>
+                    <div className={`inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold border ${statusColor} mb-5 max-w-full text-center`}>
                       {statusMessage}
                     </div>
 
                     {/* ข้อมูลเวลาเรียนสะสม */}
-                    <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
+                    <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสมในคลาสนี้:</span>
-                        <span className="font-mono text-[#00b87c] font-black text-sm">
+                        <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสม:</span>
+                        <span className="font-mono text-[#00b87c] font-black text-xs sm:text-sm">
                           {formatActiveDuration(currentStudents.find(s => s.studentId === userData.userId)?.totalActiveSeconds)}
                         </span>
                       </div>
@@ -826,22 +867,22 @@ export default function StudentDashboard() {
                       </div>
                       {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) > 0 && (
                         <div className="flex justify-between items-center text-amber-400 pt-1 border-t border-gray-800/60">
-                          <span className="font-medium">🔄 สถานะการเชื่อมต่อ:</span>
-                          <span className="font-bold">เข้าเรียนต่อเนื่อง (ครั้งที่ {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) + 1})</span>
+                          <span className="font-medium">🔄 เข้าเรียนต่อเนื่อง:</span>
+                          <span className="font-bold">ครั้งที่ {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) + 1}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="w-full max-w-md bg-[#151822] border border-gray-800/80 rounded-xl p-4 text-xs space-y-2 text-left">
-                      <div className="flex justify-between items-center">
+                    <div className="w-full max-w-md bg-[#151822] border border-gray-800/80 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left">
+                      <div className="flex justify-between items-center flex-wrap gap-1">
                         <span className="text-gray-400">📍 พิกัดของคุณ:</span>
-                        <span className="font-mono text-emerald-400 font-bold">
+                        <span className="font-mono text-emerald-400 font-bold text-[11px] sm:text-xs">
                           {myLocation.lat ? `${myLocation.lat.toFixed(5)}, ${myLocation.lng.toFixed(5)}` : 'กำลังระบุพิกัด...'}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center flex-wrap gap-1">
                         <span className="text-gray-400">🏫 พิกัดห้องเรียนอาจารย์:</span>
-                        <span className="font-mono text-blue-400 font-bold">
+                        <span className="font-mono text-blue-400 font-bold text-[11px] sm:text-xs">
                           {teacherLocation.lat ? `${teacherLocation.lat.toFixed(5)}, ${teacherLocation.lng.toFixed(5)}` : 'ไม่มีข้อมูลพิกัด'}
                         </span>
                       </div>
@@ -850,11 +891,33 @@ export default function StudentDashboard() {
                     <button
                       type="button"
                       onClick={() => requestStudentGPS()}
-                      className="mt-4 text-xs text-[#00b87c] hover:underline flex items-center gap-1 font-bold"
+                      className="mt-4 text-xs text-[#00b87c] hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
                     >
-                      🔄 ตรวจสอบและรีเฟรชพิกัด GPS ปัจจุบัน
+                      🔄 แตะเพื่อรีเฟรชพิกัด GPS ของอุปกรณ์
                     </button>
                   </div>
+                </div>
+
+                {/* Chat Panel */}
+                <div className="order-2 lg:order-1 lg:col-span-1 bg-[#151822] border border-gray-800 rounded-2xl flex flex-col overflow-hidden h-[420px] sm:h-[500px] lg:h-[600px] shadow-xl">
+                  <div className="p-3.5 sm:p-4 border-b border-gray-800 bg-[#1a1d27] flex items-center justify-between">
+                    <h3 className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                      <span>💬</span> แชทห้องเรียน
+                    </h3>
+                    <span className="text-[10px] text-gray-400 font-mono">{chatMessages.length} ข้อความ</span>
+                  </div>
+                  <div className="flex-1 p-3.5 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
+                    {chatMessages.map((msg: ChatMessage, idx: number) => (
+                      <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[88%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'bg-[#0d1017] border border-gray-800 rounded-tl-none'}`}>
+                        {msg.sender !== 'System' && <p className={`text-[11px] mb-1 font-bold ${msg.sender === userData.name ? 'text-[#00b87c]' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-500 font-normal ml-1.5">{msg.time}</span></p>}
+                        {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p className={`text-xs sm:text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>}
+                      </div>
+                    ))}
+                  </div>
+                  <form onSubmit={handleSendMessage} className="p-3 sm:p-4 border-t border-gray-800 bg-[#1a1d27] flex gap-2">
+                    <input name="message" placeholder="พิมพ์ข้อความ..." className="flex-1 bg-[#0d1017] border border-gray-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-[#00b87c] text-white text-xs sm:text-sm" required />
+                    <button type="submit" className="bg-[#00b87c] hover:bg-[#00a36e] px-4 rounded-xl font-bold text-white text-xs sm:text-sm transition-colors">ส่ง</button>
+                  </form>
                 </div>
                 
               </div>
@@ -995,32 +1058,32 @@ export default function StudentDashboard() {
               </div>
 
               {/* Table Panel (ขวา) */}
-              <div className="xl:col-span-8 bg-[#151822] rounded-2xl border border-gray-800 overflow-hidden flex flex-col">
-                 <div className="flex-1 overflow-auto">
-                    <table className="w-full text-left border-collapse">
-                       <thead className="bg-[#1f222e] text-gray-400 text-sm">
+              <div className="xl:col-span-8 bg-[#151822] rounded-2xl border border-gray-800 overflow-hidden flex flex-col shadow-xl">
+                 <div className="flex-1 overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[560px]">
+                       <thead className="bg-[#1f222e] text-gray-400 text-xs sm:text-sm">
                           <tr>
-                             <th className="p-6 font-medium">วันที่</th>
-                             <th className="p-6 font-medium">วิชา</th>
-                             <th className="p-6 font-medium text-center">เวลาเช็คชื่อ</th>
-                             <th className="p-6 font-medium text-center">สถานะ / ระยะทาง</th>
+                             <th className="p-4 sm:p-6 font-medium">วันที่</th>
+                             <th className="p-4 sm:p-6 font-medium">วิชา</th>
+                             <th className="p-4 sm:p-6 font-medium text-center">เวลาเช็คชื่อ</th>
+                             <th className="p-4 sm:p-6 font-medium text-center">สถานะ / ระยะทาง</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-gray-800/50">
                           {filteredHistory.length > 0 ? (
                              filteredHistory.map((record: HistoryRecordType) => (
                                 <tr key={record.id} className="hover:bg-gray-800/30 transition-colors">
-                                   <td className="p-6 text-gray-300 text-sm whitespace-nowrap">{record.dateStr}</td>
-                                   <td className="p-6">
-                                      <div className="font-bold text-blue-400 text-base mb-1">{record.code}</div> 
+                                   <td className="p-4 sm:p-6 text-gray-300 text-xs sm:text-sm whitespace-nowrap">{record.dateStr}</td>
+                                   <td className="p-4 sm:p-6">
+                                      <div className="font-bold text-blue-400 text-sm sm:text-base mb-0.5">{record.code}</div> 
                                       <span className="text-gray-500 text-xs">{record.name}</span>
                                    </td>
-                                   <td className="p-6 text-center text-gray-300 text-sm">{record.time}</td>
-                                   <td className="p-6 text-center h-full align-middle">
+                                   <td className="p-4 sm:p-6 text-center text-gray-300 text-xs sm:text-sm">{record.time}</td>
+                                   <td className="p-4 sm:p-6 text-center h-full align-middle">
                                       <div className="flex justify-center items-center w-full h-full pt-1">
-                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00b87c] border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
-                                        {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
-                                        {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium">🚫 {record.status}</span>}
+                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00b87c] border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
+                                        {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
+                                        {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">🚫 {record.status}</span>}
                                       </div>
                                    </td>
                                 </tr>
@@ -1042,7 +1105,7 @@ export default function StudentDashboard() {
           </div>
         )}
 
-      </div>
+      </main>
     </div>
   );
 }

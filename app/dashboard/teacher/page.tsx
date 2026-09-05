@@ -502,23 +502,43 @@ export default function TeacherDashboard() {
   if (loading) return <div className="min-h-screen bg-[#11141c] text-white flex justify-center items-center">กำลังโหลด...</div>;
 
   return (
-    <div className="flex min-h-screen bg-[#11141c] text-white font-sans relative">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#11141c] text-white font-sans relative">
       
+      {/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
+      <header className="md:hidden bg-[#161a26] border-b border-[#232938] px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">👨‍🏫</span>
+          <div>
+            <h1 className="text-base font-black text-blue-400 leading-tight">CheckIn Teacher</h1>
+            <p className="text-[11px] text-gray-400 leading-none">{userData?.name || "อาจารย์ผู้สอน"}</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          onClick={handleLogout}
+          className="text-xs bg-[#1c2130] hover:bg-rose-900/40 border border-[#2a3041] hover:border-rose-500/50 text-gray-300 hover:text-rose-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 font-semibold"
+        >
+          <span>🚪</span> ออกจากระบบ
+        </button>
+      </header>
+
       {showQRModal && isRoomActive && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#1a1f2e] p-10 rounded-3xl border border-[#2a3041] shadow-2xl text-center relative max-w-sm w-full">
+          <div className="bg-[#1a1f2e] p-6 sm:p-10 rounded-3xl border border-[#2a3041] shadow-2xl text-center relative max-w-sm w-full">
             <button onClick={() => setShowQRModal(false)} className="absolute top-4 right-6 text-gray-400 hover:text-white text-2xl font-bold">✕</button>
-            <h2 className="text-2xl font-bold text-white mb-2">สแกนเพื่อเข้าเรียน</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">สแกนเพื่อเข้าเรียน</h2>
             <p className="text-blue-400 font-bold mb-6">{setupCourse?.code}</p>
-            <div className="bg-white p-6 rounded-2xl inline-block shadow-lg mb-6"><QRCodeCanvas value={`CheckIn-${roomCode}`} size={200} /></div>
+            <div className="bg-white p-4 sm:p-6 rounded-2xl inline-block shadow-lg mb-6">
+              <QRCodeCanvas value={`CheckIn-${roomCode}`} size={180} />
+            </div>
             <p className="text-gray-400 text-sm mb-1">รหัสเข้าร่วมห้องเรียน</p>
-            <p className="text-5xl font-black tracking-widest text-blue-400">{roomCode}</p>
+            <p className="text-4xl sm:text-5xl font-black tracking-widest text-blue-400">{roomCode}</p>
           </div>
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className="w-64 bg-[#161a26] flex flex-col border-r border-[#232938] z-10 shadow-xl">
+      {/* Desktop Sidebar (จอคอมพิวเตอร์และ iPad แนวนอน) */}
+      <aside className="hidden md:flex md:w-64 bg-[#161a26] flex-col border-r border-[#232938] z-10 shadow-xl shrink-0">
         <div className="p-6 border-b border-[#232938]">
           <h1 className="text-xl font-bold text-blue-400">เมนูการจัดการ</h1>
           <p className="text-xs text-gray-400 mt-1">{userData?.name || "อาจารย์"}</p>
@@ -539,9 +559,50 @@ export default function TeacherDashboard() {
             <span>🚪</span> ออกจากระบบ
           </button>
         </div>
-      </div>
+      </aside>
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* Mobile Bottom Navigation Bar (แถบเมนูล่างสำหรับมือถือ/แท็บเล็ต) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#161a26]/95 backdrop-blur-lg border-t border-[#232938] flex justify-around items-center py-2 px-3 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <button
+          type="button"
+          onClick={() => { setActiveMenu('home'); setSelectedStatsCourse(null); }}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'home'
+              ? 'text-blue-400 font-bold bg-blue-600/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">🏠</span>
+          <span className="text-[11px] mt-1">ห้องเรียน</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveMenu('add'); setSelectedStatsCourse(null); }}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'add'
+              ? 'text-blue-400 font-bold bg-blue-600/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">📚</span>
+          <span className="text-[11px] mt-1">เพิ่มรายวิชา</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMenu('stats')}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
+            activeMenu === 'stats'
+              ? 'text-blue-400 font-bold bg-blue-600/10 shadow-sm'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <span className="text-xl leading-none">📊</span>
+          <span className="text-[11px] mt-1">สถิติ</span>
+        </button>
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-h-screen md:h-screen overflow-y-auto pb-24 md:pb-0">
         {!configured && (
           <div className="bg-amber-500/20 border-b border-amber-500/40 p-3 px-6 text-amber-300 text-xs flex justify-between items-center">
             <span>⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ใส่ Supabase URL หรือ Anon Key ใน <code>.env.local</code> หากต้องการให้ข้อมูลบันทึกถาวรโปรดระบุ Key</span>
@@ -638,25 +699,29 @@ export default function TeacherDashboard() {
 
             {isRoomActive && setupCourse && (
               <div className="flex-1 flex flex-col animate-fadeIn">
-                <div className="flex justify-between items-end mb-6 border-b border-[#232938] pb-6">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 border-b border-[#232938] pb-6">
                   <div>
-                    <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-                      <span className="w-4 h-4 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> ห้องเรียน Live: {setupCourse.code}
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                      <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> ห้องเรียน Live: {setupCourse.code}
                     </h2>
-                    <div className="flex items-center gap-4 mt-2">
-                      <p className="text-gray-400">{setupCourse.name} | หมู่เรียน 1 | สอนครั้งที่ {autoSessionNum}</p>
-                      <span className="text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full">
-                        📍 พิกัดห้องเรียน: {teacherLocation.lat.toFixed(5)}, {teacherLocation.lng.toFixed(5)}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
+                      <p className="text-xs sm:text-sm text-gray-400">{setupCourse.name} | หมู่เรียน 1 | สอนครั้งที่ {autoSessionNum}</p>
+                      <span className="text-[11px] sm:text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
+                        📍 พิกัด: {teacherLocation.lat.toFixed(5)}, {teacherLocation.lng.toFixed(5)}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="bg-[#1c2130] border border-[#2a3041] px-6 py-2 rounded-xl text-center">
-                      <p className="text-xs text-gray-400 mb-1">เวลาที่เหลือ</p>
-                      <p className={`text-2xl font-mono font-bold ${timeLeft <= 300 ? 'text-red-500 animate-pulse' : 'text-emerald-400'}`}>{formatTime(timeLeft)}</p>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full lg:w-auto">
+                    <div className="bg-[#1c2130] border border-[#2a3041] px-4 sm:px-6 py-2 rounded-xl text-center flex-1 sm:flex-initial">
+                      <p className="text-[10px] sm:text-xs text-gray-400 mb-0.5">เวลาที่เหลือ</p>
+                      <p className={`text-xl sm:text-2xl font-mono font-bold ${timeLeft <= 300 ? 'text-red-500 animate-pulse' : 'text-emerald-400'}`}>{formatTime(timeLeft)}</p>
                     </div>
-                    <button onClick={() => setShowQRModal(true)} className="bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl font-bold shadow-lg transition-colors">แสดง QR Code</button>
-                    <button onClick={() => handleEndClass(false)} className="bg-red-900/40 hover:bg-red-600 border border-red-500/30 text-red-200 hover:text-white px-6 py-4 rounded-xl font-bold transition-all">ยุบห้องเรียน</button>
+                    <button onClick={() => setShowQRModal(true)} className="bg-white hover:bg-gray-200 text-black px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm shadow-lg transition-colors flex-1 sm:flex-initial">
+                      📸 แสดง QR Code
+                    </button>
+                    <button onClick={() => handleEndClass(false)} className="bg-red-900/40 hover:bg-red-600 border border-red-500/30 text-red-200 hover:text-white px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex-1 sm:flex-initial">
+                      ยุบห้องเรียน
+                    </button>
                   </div>
                 </div>
 
@@ -727,8 +792,8 @@ export default function TeacherDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex-1 overflow-auto">
-                      <table className="w-full text-left text-sm">
+                    <div className="flex-1 overflow-x-auto">
+                      <table className="w-full text-left text-xs sm:text-sm min-w-[640px]">
                         <thead className="bg-[#1c2130] text-gray-400 border-b border-[#232938] sticky top-0">
                           <tr>
                             <th className="p-4">รหัส</th>
@@ -1007,7 +1072,7 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-      </div>
+      </main>
     </div>
   );
 }
