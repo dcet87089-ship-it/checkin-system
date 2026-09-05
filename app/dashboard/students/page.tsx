@@ -588,9 +588,9 @@ export default function StudentDashboard() {
   };
 
   if (loading || !userData) return (
-    <div className="min-h-screen bg-[#0f172a]/70 backdrop-blur-md shadow-inner flex flex-col items-center justify-center gap-6">
+    <div className="min-h-screen glass-panel flex flex-col items-center justify-center gap-6">
       <div className="w-12 h-12 border-4 border-[#00b87c] border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-bold text-[#00b87c] tracking-[0.2em] animate-pulse">LOADING SYSTEM...</p>
+      <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black tracking-[0.2em] animate-pulse">LOADING SYSTEM...</p>
     </div>
   );
 
@@ -606,9 +606,9 @@ export default function StudentDashboard() {
       statusMessage = "🚨 คุณปิด GPS! (ระบบแจ้งอาจารย์แล้ว / ถือว่าขาดเรียน)";
       distTextColor = "text-rose-500";
   } else if (dist <= 50) {
-      statusColor = "bg-[#00b87c]/10 text-[#00b87c] border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
+      statusColor = "bg-[#00b87c]/10 text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
       statusMessage = "✅ ระยะปลอดภัย (สถานะ: เข้าเรียน)";
-      distTextColor = "text-[#00b87c]";
+      distTextColor = "text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black";
   } else if (dist <= 100) {
       statusColor = "bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]";
       statusMessage = "⚠️ เริ่มออกห่างจากห้อง (สถานะ: เฝ้าระวัง)";
@@ -626,14 +626,22 @@ export default function StudentDashboard() {
   const errorClasses = historyData.filter(h => h.type === 'error').length; 
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] text-gray-200 font-sans relative">
+    <div className="flex flex-col md:flex-row min-h-screen bg-cosmic animate-gradient-bg relative overflow-hidden text-gray-200 font-sans relative">
       
-      {/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
-      <header className="md:hidden bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
+      
+      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
+      
+      {/* 🌌 Animated Stars / Particles overlay */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
+{/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
+      <header className="md:hidden glass-panel animate-float-delayed border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2">
           <span className="text-xl">📍</span>
           <div>
-            <h1 className="text-base font-black text-[#00b87c] leading-tight">CheckIn</h1>
+            <h1 className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black leading-tight">CheckIn</h1>
             <p className="text-[11px] text-gray-400 leading-none">{userData.name} ({userData.userId})</p>
           </div>
         </div>
@@ -648,7 +656,7 @@ export default function StudentDashboard() {
 
       {/* แถบแจ้งเตือนฉุกเฉินเมื่อนักศึกษาปิด GPS ระหว่างเรียน */}
       {isGpsOff && joinedClass && (
-        <div className="fixed top-16 md:top-5 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-rose-400 to-rose-600 hover:from-rose-300 hover:to-rose-500 shadow-[0_4px_0_0_#be123c,0_10px_20px_rgba(225,29,72,0.3)] active:shadow-[0_0px_0_0_#be123c,0_0px_0px_rgba(225,29,72,0)] active:translate-y-[4px] transition-all border-2 border-white text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 sm:gap-4 max-w-xl w-[92%] animate-bounce">
+        <div className="fixed top-16 md:top-5 left-1/2 -translate-x-1/2 z-50 btn-holographic border-2 border-white text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 sm:gap-4 max-w-xl w-[92%] animate-bounce">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-2xl sm:text-3xl">🚨</span>
             <div>
@@ -672,9 +680,9 @@ export default function StudentDashboard() {
       {/* Modal เพิ่มวิชาเรียน */}
       {showAddCourseModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
+          <div className="glass-panel animate-float-delayed border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#00b87c]">เพิ่มวิชาเรียนใหม่</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">เพิ่มวิชาเรียนใหม่</h2>
               <button onClick={() => setShowAddCourseModal(false)} className="text-gray-500 hover:text-white transition-colors text-xl p-1">✕</button>
             </div>
 
@@ -682,17 +690,17 @@ export default function StudentDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-400 mb-1.5 block">รหัสวิชา</label>
-                  <input name="code" placeholder="CPE101" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
+                  <input name="code" placeholder="CPE101" className="w-full p-3.5 sm:p-4 rounded-xl glass-panel border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-400 mb-1.5 block">ชื่อวิชา</label>
-                  <input name="name" placeholder="Programming" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
+                  <input name="name" placeholder="Programming" className="w-full p-3.5 sm:p-4 rounded-xl glass-panel border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" required />
                 </div>
               </div>
               
               <div>
                 <label className="text-sm font-medium text-gray-400 mb-1.5 block">วันเรียน</label>
-                <select name="day" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white cursor-pointer text-sm sm:text-base" required>
+                <select name="day" className="w-full p-3.5 sm:p-4 rounded-xl glass-panel border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white cursor-pointer text-sm sm:text-base" required>
                   <option value="Monday">วันจันทร์</option>
                   <option value="Tuesday">วันอังคาร</option>
                   <option value="Wednesday">วันพุธ</option>
@@ -704,15 +712,15 @@ export default function StudentDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-400 mb-1.5 block">เวลา</label>
-                  <input name="time" placeholder="09:00 - 12:00" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
+                  <input name="time" placeholder="09:00 - 12:00" className="w-full p-3.5 sm:p-4 rounded-xl glass-panel border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-400 mb-1.5 block">สถานที่</label>
-                  <input name="location" placeholder="ห้อง 401" className="w-full p-3.5 sm:p-4 rounded-xl bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
+                  <input name="location" placeholder="ห้อง 401" className="w-full p-3.5 sm:p-4 rounded-xl glass-panel border border-gray-800 focus:outline-none focus:border-[#00b87c] text-white text-sm sm:text-base" />
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all hover:bg-[#00a36e] text-white p-3.5 sm:p-4 rounded-xl font-bold text-base sm:text-lg mt-4 transition-all">
+              <button type="submit" className="w-full btn-holographic hover:bg-[#00a36e] text-white p-3.5 sm:p-4 rounded-xl font-bold text-base sm:text-lg mt-4 transition-all">
                 บันทึกตารางเรียน
               </button>
             </form>
@@ -721,30 +729,30 @@ export default function StudentDashboard() {
       )}
 
       {/* Desktop Sidebar (จอคอมพิวเตอร์และ iPad แนวนอน) */}
-      <aside className="hidden md:flex md:w-64 bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] flex-col py-6 px-4 border-r border-gray-800 relative z-20 shrink-0">
-        <h1 className="text-lg font-bold text-[#00b87c] mb-8 mt-2 px-2 flex items-center gap-2">
+      <aside className="hidden md:flex md:w-64 glass-panel animate-float-delayed flex-col py-6 px-4 border-r border-gray-800 relative z-20 shrink-0">
+        <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black mb-8 mt-2 px-2 flex items-center gap-2">
           <span>📍</span> CheckIn
         </h1>
         
         <div className="space-y-2 flex-1">
-          <button type="button" onClick={() => setActiveMenu('home')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'home' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
+          <button type="button" onClick={() => setActiveMenu('home')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'home' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
             <span className="text-lg">📱</span> เข้าเรียน
           </button>
-          <button type="button" onClick={() => setActiveMenu('schedule')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'schedule' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
+          <button type="button" onClick={() => setActiveMenu('schedule')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'schedule' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
             <span className="text-lg">📅</span> ตารางเรียน
           </button>
-          <button type="button" onClick={() => setActiveMenu('history')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'history' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
+          <button type="button" onClick={() => setActiveMenu('history')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'history' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
             <span className="text-lg">📊</span> ประวัติเข้าเรียน
           </button>
         </div>
 
         <div className="mt-auto pt-6 border-t border-gray-800">
           <div className="flex flex-col mb-4 px-2">
-            <p className="text-sm font-bold text-[#00b87c]">{userData.name}</p>
+            <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{userData.name}</p>
             <p className="text-xs text-gray-500 mt-1">{userData.userId}</p>
           </div>
           <button type="button" onClick={handleLogout} className="w-full flex items-center gap-3 text-gray-400 hover:text-gray-200 py-2 transition-colors text-sm font-medium">
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xs border border-gray-700">
+            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-xs border border-gray-700">
               {userData.name.charAt(0)}
             </div>
             ออกจากระบบ
@@ -753,13 +761,13 @@ export default function StudentDashboard() {
       </aside>
 
       {/* Mobile Bottom Navigation Bar (แถบเมนูล่างสำหรับสมาร์ทโฟน/แท็บเล็ต) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around items-center py-2 px-3 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel animate-float-delayed/95 backdrop-blur-lg border-t border-gray-800 flex justify-around items-center py-2 px-3 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
         <button
           type="button"
           onClick={() => setActiveMenu('home')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'home'
-              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -771,7 +779,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveMenu('schedule')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'schedule'
-              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -783,7 +791,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveMenu('history')}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all ${
             activeMenu === 'history'
-              ? 'text-[#00b87c] font-bold bg-[#00b87c]/10 shadow-sm'
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-bold bg-[#00b87c]/10 shadow-sm'
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
@@ -808,11 +816,11 @@ export default function StudentDashboard() {
             <h2 className="text-2xl font-bold text-white mb-8">เข้าสู่ห้องเรียน</h2>
             
             {!joinedClass ? (
-              <div className="bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 p-10 rounded-2xl max-w-2xl mx-auto shadow-sm">
+              <div className="glass-panel animate-float-delayed border border-gray-800 p-10 rounded-2xl max-w-2xl mx-auto shadow-sm">
                 <p className="text-gray-400 mb-6 text-center font-medium">เลือกวิธีเข้าเรียน (ระบบจะจับระยะห่าง GPS)</p>
                 
                 {/* กล่องแสดงสถานะ GPS ของนักศึกษา */}
-                <div className="bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 rounded-2xl p-4 sm:p-5 mb-6 text-sm shadow-sm">
+                <div className="glass-panel border border-gray-800 rounded-2xl p-4 sm:p-5 mb-6 text-sm shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">📍</span>
@@ -839,7 +847,7 @@ export default function StudentDashboard() {
                       className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow ${
                         myLocation.lat !== 0 
                           ? 'bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 border border-gray-700' 
-                          : 'bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all hover:bg-[#00a36e] text-white animate-pulse'
+                          : 'btn-holographic hover:bg-[#00a36e] text-white animate-pulse'
                       }`}
                     >
                       {myLocation.lat !== 0 ? '🔄 รีเฟรชพิกัดใหม่' : '👉 แตะที่นี่เพื่อเปิด GPS (เบราว์เซอร์จะเด้งถาม)'}
@@ -859,7 +867,7 @@ export default function StudentDashboard() {
 
                 {isScanning ? (
                   <div className="max-w-sm mx-auto animate-fadeIn text-center">
-                    <div className="overflow-hidden rounded-2xl border-2 border-[#00b87c] mb-6 p-1 bg-[#0f172a]/70 backdrop-blur-md shadow-inner">
+                    <div className="overflow-hidden rounded-2xl border-2 border-[#00b87c] mb-6 p-1 glass-panel">
                       <div className="rounded-xl overflow-hidden">
                          <Scanner onScan={(result: any[]) => handleScanSuccess(result[0].rawValue)} onError={(error: any) => console.log(error?.message)} />
                       </div>
@@ -867,7 +875,7 @@ export default function StudentDashboard() {
                     <button type="button" onClick={() => setIsScanning(false)} className="text-gray-400 hover:text-white underline text-sm">ยกเลิกการสแกน</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={handleStartScan} className="w-full bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all hover:bg-[#00a36e] text-white py-4 rounded-xl font-bold text-lg mb-8 transition-colors flex justify-center items-center gap-2">
+                  <button type="button" onClick={handleStartScan} className="w-full btn-holographic hover:bg-[#00a36e] text-white py-4 rounded-xl font-bold text-lg mb-8 transition-colors flex justify-center items-center gap-2">
                     <span className="text-2xl">📸</span> สแกน QR Code (ต้องเปิด GPS)
                   </button>
                 )}
@@ -885,10 +893,10 @@ export default function StudentDashboard() {
                     maxLength={6}
                     value={joinCodeInput}
                     onChange={(e) => setJoinCodeInput(e.target.value)}
-                    className="flex-1 bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 rounded-xl px-6 py-4 text-center text-xl font-bold tracking-[0.2em] focus:outline-none focus:border-[#00b87c] text-white transition-all" 
+                    className="flex-1 glass-panel border border-gray-800 rounded-xl px-6 py-4 text-center text-xl font-bold tracking-[0.2em] focus:outline-none focus:border-[#00b87c] text-white transition-all" 
                     required 
                   />
-                  <button type="submit" className="bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all hover:bg-blue-500 px-8 rounded-xl font-bold text-white transition-colors">
+                  <button type="submit" className="btn-holographic hover:bg-blue-500 px-8 rounded-xl font-bold text-white transition-colors">
                     เข้าร่วม
                   </button>
                 </form>
@@ -897,7 +905,7 @@ export default function StudentDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                 
                 {/* Tracking Panel (แสดงเป็นอันดับแรกบนมือถือและแท็บเล็ต) */}
-                <div className="order-1 lg:order-2 lg:col-span-2 bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 rounded-2xl p-5 sm:p-8 flex flex-col relative overflow-hidden shadow-xl">
+                <div className="order-1 lg:order-2 lg:col-span-2 glass-panel animate-float-delayed border border-gray-800 rounded-2xl p-5 sm:p-8 flex flex-col relative overflow-hidden shadow-xl">
                   <div className="absolute top-0 left-0 w-full h-1 bg-[#00b87c]"></div>
                   
                   <div className="flex flex-wrap justify-between items-center gap-3 mb-6 sm:mb-8">
@@ -913,7 +921,7 @@ export default function StudentDashboard() {
                     </button>
                   </div>
 
-                  <div className="bg-[#0f172a]/70 backdrop-blur-md shadow-inner rounded-2xl p-6 sm:p-10 text-center border border-gray-800 flex-1 flex flex-col justify-center items-center relative shadow-inner">
+                  <div className="glass-panel rounded-2xl p-6 sm:p-10 text-center border border-gray-800 flex-1 flex flex-col justify-center items-center relative shadow-inner">
                     <p className="text-gray-400 mb-1 font-medium text-xs sm:text-sm">ระยะห่างจากอาจารย์ในห้องเรียน</p>
                     <p className={`text-5xl sm:text-7xl font-black mb-3 ${distTextColor}`}>
                       {dist.toFixed(0)} <span className="text-xl sm:text-2xl text-gray-500 font-normal ml-1">ม.</span>
@@ -926,7 +934,7 @@ export default function StudentDashboard() {
                     <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสม:</span>
-                        <span className="font-mono text-[#00b87c] font-black text-xs sm:text-sm">
+                        <span className="font-mono text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black font-black text-xs sm:text-sm">
                           {formatActiveDuration(currentStudents.find(s => s.studentId === userData.userId)?.totalActiveSeconds)}
                         </span>
                       </div>
@@ -944,7 +952,7 @@ export default function StudentDashboard() {
                       )}
                     </div>
 
-                    <div className="w-full max-w-md bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800/80 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left">
+                    <div className="w-full max-w-md glass-panel animate-float-delayed border border-gray-800/80 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left">
                       <div className="flex justify-between items-center flex-wrap gap-1">
                         <span className="text-gray-400">📍 พิกัดของคุณ:</span>
                         <span className="font-mono text-emerald-400 font-bold text-[11px] sm:text-xs">
@@ -962,7 +970,7 @@ export default function StudentDashboard() {
                     <button
                       type="button"
                       onClick={() => requestStudentGPS()}
-                      className="mt-4 text-xs text-[#00b87c] hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
+                      className="mt-4 text-xs text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
                     >
                       🔄 แตะเพื่อรีเฟรชพิกัด GPS ของอุปกรณ์
                     </button>
@@ -970,7 +978,7 @@ export default function StudentDashboard() {
                 </div>
 
                 {/* Chat Panel */}
-                <div className="order-2 lg:order-1 lg:col-span-1 bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 rounded-2xl flex flex-col overflow-hidden h-[420px] sm:h-[500px] lg:h-[600px] shadow-xl">
+                <div className="order-2 lg:order-1 lg:col-span-1 glass-panel animate-float-delayed border border-gray-800 rounded-2xl flex flex-col overflow-hidden h-[420px] sm:h-[500px] lg:h-[600px] shadow-xl">
                   <div className="p-3.5 sm:p-4 border-b border-gray-800 bg-[#1a1d27] flex items-center justify-between">
                     <h3 className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
                       <span>💬</span> แชทห้องเรียน
@@ -979,15 +987,15 @@ export default function StudentDashboard() {
                   </div>
                   <div className="flex-1 p-3.5 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
                     {chatMessages.map((msg: ChatMessage, idx: number) => (
-                      <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[88%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 rounded-tl-none'}`}>
-                        {msg.sender !== 'System' && <p className={`text-[11px] mb-1 font-bold ${msg.sender === userData.name ? 'text-[#00b87c]' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-500 font-normal ml-1.5">{msg.time}</span></p>}
+                      <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[88%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'glass-panel border border-gray-800 rounded-tl-none'}`}>
+                        {msg.sender !== 'System' && <p className={`text-[11px] mb-1 font-bold ${msg.sender === userData.name ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-500 font-normal ml-1.5">{msg.time}</span></p>}
                         {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p className={`text-xs sm:text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>}
                       </div>
                     ))}
                   </div>
                   <form onSubmit={handleSendMessage} className="p-3 sm:p-4 border-t border-gray-800 bg-[#1a1d27] flex gap-2">
-                    <input name="message" placeholder="พิมพ์ข้อความ..." className="flex-1 bg-[#0f172a]/70 backdrop-blur-md shadow-inner border border-gray-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-[#00b87c] text-white text-xs sm:text-sm" required />
-                    <button type="submit" className="bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all hover:bg-[#00a36e] px-4 rounded-xl font-bold text-white text-xs sm:text-sm transition-colors">ส่ง</button>
+                    <input name="message" placeholder="พิมพ์ข้อความ..." className="flex-1 glass-panel border border-gray-800 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 focus:outline-none focus:border-[#00b87c] text-white text-xs sm:text-sm" required />
+                    <button type="submit" className="btn-holographic hover:bg-[#00a36e] px-4 rounded-xl font-bold text-white text-xs sm:text-sm transition-colors">ส่ง</button>
                   </form>
                 </div>
                 
@@ -1006,7 +1014,7 @@ export default function StudentDashboard() {
               <button 
                 type="button"
                 onClick={() => setShowAddCourseModal(true)} 
-                className="bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all hover:bg-[#00a36e] px-4 py-2 rounded-xl font-bold text-white transition-colors text-sm"
+                className="btn-holographic hover:bg-[#00a36e] px-4 py-2 rounded-xl font-bold text-white transition-colors text-sm"
               >
                 + เพิ่มวิชาเรียน
               </button>
@@ -1018,8 +1026,8 @@ export default function StudentDashboard() {
                 const daysSchedule = scheduleData[day] || [];
                 
                 return (
-                  <div key={day} className="bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 rounded-2xl p-5 flex flex-col">
-                    <h3 className="text-base font-bold text-[#00b87c] mb-4 pb-2 border-b border-gray-800 uppercase">{day}</h3>
+                  <div key={day} className="glass-panel animate-float-delayed border border-gray-800 rounded-2xl p-5 flex flex-col">
+                    <h3 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black mb-4 pb-2 border-b border-gray-800 uppercase">{day}</h3>
                     
                     <div className="space-y-3 flex-1">
                       {daysSchedule.length === 0 ? (
@@ -1028,7 +1036,7 @@ export default function StudentDashboard() {
                         </div>
                       ) : (
                         daysSchedule.map((item: ScheduleItemType) => (
-                          <div key={item.id} className="bg-[#0f172a]/70 backdrop-blur-md shadow-inner p-4 rounded-xl border border-gray-800 hover:border-[#00b87c]/50 transition-colors">
+                          <div key={item.id} className="glass-panel p-4 rounded-xl border border-gray-800 hover:border-[#00b87c]/50 transition-colors">
                             <div className="font-bold text-white text-base mb-1">{item.code}</div>
                             <p className="text-gray-400 text-xs mb-3 truncate font-medium">{item.name}</p>
                             <div className="flex flex-col gap-1.5 mt-auto">
@@ -1055,13 +1063,13 @@ export default function StudentDashboard() {
             
             {/* สถิติ 4 กล่องบน */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-               <div className="bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-gray-800 p-6 rounded-2xl text-center flex flex-col justify-center">
+               <div className="glass-panel animate-float-delayed border border-gray-800 p-6 rounded-2xl text-center flex flex-col justify-center">
                  <p className="text-gray-400 text-xs md:text-sm mb-2 font-medium">เรียนทั้งหมด</p>
                  <p className="text-3xl font-bold text-white">{totalClasses} <span className="text-sm font-normal text-gray-500">คาบ</span></p>
                </div>
                <div className="bg-[#0e2920] border border-[#00b87c]/30 p-6 rounded-2xl text-center flex flex-col justify-center">
-                 <p className="text-[#00b87c] text-xs md:text-sm mb-2 font-medium">เข้าเรียน (เขียว)</p>
-                 <p className="text-3xl font-bold text-[#00b87c]">{successClasses} <span className="text-sm font-normal text-emerald-800">คาบ</span></p>
+                 <p className="text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black text-xs md:text-sm mb-2 font-medium">เข้าเรียน (เขียว)</p>
+                 <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{successClasses} <span className="text-sm font-normal text-emerald-800">คาบ</span></p>
                </div>
                <div className="bg-[#292211] border border-yellow-500/30 p-6 rounded-2xl text-center flex flex-col justify-center">
                  <p className="text-yellow-500 text-xs md:text-sm mb-2 font-medium">เฝ้าระวัง (เหลือง)</p>
@@ -1076,10 +1084,10 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 md:gap-8">
               
               {/* Calendar Panel (ซ้าย) */}
-              <div className="xl:col-span-4 flex flex-col bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] p-6 rounded-2xl border border-gray-800">
+              <div className="xl:col-span-4 flex flex-col glass-panel animate-float-delayed p-6 rounded-2xl border border-gray-800">
                  <div className="flex justify-between items-center mb-6">
                     <button type="button" onClick={() => { setCalendarDate(new Date(currentYear, currentMonth - 1, 1)); setSelectedDate(null); }} className="w-8 h-8 rounded bg-gray-800/50 flex items-center justify-center text-gray-400 hover:text-white transition-colors">&lt;</button>
-                    <h3 className="font-bold text-lg text-[#00b87c]">{monthNamesThai[currentMonth]} {currentYear}</h3>
+                    <h3 className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black">{monthNamesThai[currentMonth]} {currentYear}</h3>
                     <button type="button" onClick={() => { setCalendarDate(new Date(currentYear, currentMonth + 1, 1)); setSelectedDate(null); }} className="w-8 h-8 rounded bg-gray-800/50 flex items-center justify-center text-gray-400 hover:text-white transition-colors">&gt;</button>
                  </div>
                  
@@ -1104,7 +1112,7 @@ export default function StudentDashboard() {
                          } else if (dayRecords.some(r => r.type === 'warning')) {
                            bgColor = "bg-amber-900/40 text-amber-500 border border-amber-500/50 rounded-lg";
                          } else {
-                           bgColor = "bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 shadow-[0_4px_0_0_#047857,0_10px_20px_rgba(16,185,129,0.3)] active:shadow-[0_0px_0_0_#047857,0_0px_0px_rgba(16,185,129,0)] active:translate-y-[4px] transition-all text-white rounded-lg";
+                           bgColor = "btn-holographic text-white rounded-lg";
                          }
                        }
 
@@ -1129,7 +1137,7 @@ export default function StudentDashboard() {
               </div>
 
               {/* Table Panel (ขวา) */}
-              <div className="xl:col-span-8 bg-[#1e293b]/70 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-2xl border border-gray-800 overflow-hidden flex flex-col shadow-xl">
+              <div className="xl:col-span-8 glass-panel animate-float-delayed rounded-2xl border border-gray-800 overflow-hidden flex flex-col shadow-xl">
                  <div className="flex-1 overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[560px]">
                        <thead className="bg-[#1f222e] text-gray-400 text-xs sm:text-sm">
@@ -1152,7 +1160,7 @@ export default function StudentDashboard() {
                                    <td className="p-4 sm:p-6 text-center text-gray-300 text-xs sm:text-sm">{record.time}</td>
                                    <td className="p-4 sm:p-6 text-center h-full align-middle">
                                       <div className="flex justify-center items-center w-full h-full pt-1">
-                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00b87c] border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
+                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">🚫 {record.status}</span>}
                                       </div>

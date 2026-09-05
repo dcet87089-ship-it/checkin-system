@@ -72,9 +72,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-cosmic animate-gradient-bg relative overflow-hidden relative overflow-hidden">
       
-      {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
+      
+      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
+      
+      {/* 🌌 Animated Stars / Particles overlay */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
+{/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes spin-slow {
           100% { transform: rotate(360deg); }
@@ -227,11 +235,7 @@ export default function RegisterPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full font-black py-4 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 active:translate-y-2 text-sm uppercase tracking-wider mt-4 ${
-                role === 'teacher'
-                  ? 'bg-gradient-to-r from-[#ff00a0] to-[#7a00ff] text-white shadow-[0_6px_0_0_#9d174d,0_15px_25px_rgba(255,0,160,0.4)] hover:shadow-[0_8px_0_0_#9d174d,0_15px_35px_rgba(255,0,160,0.6)] active:shadow-[0_0px_0_0_#9d174d,0_0px_0px_rgba(255,0,160,0)]'
-                  : 'bg-gradient-to-r from-[#00e5ff] to-[#3b82f6] text-white shadow-[0_6px_0_0_#1e3a8a,0_15px_25px_rgba(0,229,255,0.4)] hover:shadow-[0_8px_0_0_#1e3a8a,0_15px_35px_rgba(0,229,255,0.6)] active:shadow-[0_0px_0_0_#1e3a8a,0_0px_0px_rgba(0,229,255,0)]'
-              } disabled:opacity-50`}
+              className={`w-full font-black py-4 rounded-2xl btn-holographic mt-4 disabled:opacity-50`}
             >
               {loading ? "กำลังบันทึกข้อมูล..." : `สมัครบัญชี${role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}`}
             </button>

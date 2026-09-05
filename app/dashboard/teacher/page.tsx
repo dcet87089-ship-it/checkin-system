@@ -538,10 +538,18 @@ export default function TeacherDashboard() {
   if (loading) return <div className="min-h-screen bg-[#11141c] text-white flex justify-center items-center">กำลังโหลด...</div>;
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] text-white font-sans relative">
+    <div className="flex flex-col md:flex-row min-h-screen bg-cosmic animate-gradient-bg relative overflow-hidden text-white font-sans relative">
       
-      {/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
-      <header className="md:hidden bg-[#161a26] border-b border-[#232938] px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
+      
+      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
+      
+      {/* 🌌 Animated Stars / Particles overlay */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
+{/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
+      <header className="md:hidden glass-panel border-b border-white/20 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2">
           <span className="text-xl">👨‍🏫</span>
           <div>
@@ -580,13 +588,13 @@ export default function TeacherDashboard() {
           <p className="text-xs text-gray-400 mt-1">{userData?.name || "อาจารย์"}</p>
         </div>
         <div className="flex-1 p-4 space-y-2">
-          <button onClick={() => { setActiveMenu('home'); setSelectedStatsCourse(null); }} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'home' ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
+          <button onClick={() => { setActiveMenu('home'); setSelectedStatsCourse(null); }} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'home' ? 'btn-holographic text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
             <span>🏠</span> หน้าแรก (ห้องเรียน)
           </button>
-          <button onClick={() => { setActiveMenu('add'); setSelectedStatsCourse(null); }} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'add' ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
+          <button onClick={() => { setActiveMenu('add'); setSelectedStatsCourse(null); }} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'add' ? 'btn-holographic text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
             <span>📚</span> เพิ่มรายวิชา
           </button>
-          <button onClick={() => setActiveMenu('stats')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'stats' ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
+          <button onClick={() => setActiveMenu('stats')} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'stats' ? 'btn-holographic text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
             <span>📊</span> สถิติการเข้าเรียน
           </button>
         </div>
@@ -723,7 +731,7 @@ export default function TeacherDashboard() {
                           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow ${
                             teacherLocation.lat !== 0
                               ? 'bg-[#1c2130] text-blue-300 hover:bg-[#202636] border border-[#2a3041]'
-                              : 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all hover:bg-blue-500 text-white animate-pulse'
+                              : 'btn-holographic hover:bg-blue-500 text-white animate-pulse'
                           }`}
                         >
                           {teacherLocation.lat !== 0 ? '🔄 ตรวจจับใหม่อีกครั้ง' : '👉 แตะเพื่อเปิด GPS'}
@@ -741,7 +749,7 @@ export default function TeacherDashboard() {
                     </div>
 
                     <p className="text-red-400 text-xs mt-2">* ต้องเปิดพิกัด GPS ของอาจารย์ก่อนเริ่มคลาส เพื่อใช้เปรียบเทียบระยะห่างของนักศึกษา</p>
-                    <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all mt-6">
+                    <button type="submit" className="w-full btn-holographic hover:bg-blue-500 text-white font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] py-4 rounded-xl shadow-lg transition-all mt-6">
                       สร้างห้องเรียน (เปิดคลาส)
                     </button>
                   </form>
@@ -791,7 +799,7 @@ export default function TeacherDashboard() {
                         </p>
                       </div>
                     </div>
-                    <span className="bg-gradient-to-r from-rose-400 to-rose-600 hover:from-rose-300 hover:to-rose-500 shadow-[0_4px_0_0_#be123c,0_10px_20px_rgba(225,29,72,0.3)] active:shadow-[0_0px_0_0_#be123c,0_0px_0px_rgba(225,29,72,0)] active:translate-y-[4px] transition-all text-white font-black text-xs px-3 py-1.5 rounded-xl uppercase tracking-wider whitespace-nowrap self-start md:self-auto">
+                    <span className="btn-holographic text-white font-black text-xs px-3 py-1.5 rounded-xl uppercase tracking-wider whitespace-nowrap self-start md:self-auto">
                       เด้งออกจากห้อง (ปิด GPS)
                     </span>
                   </div>
@@ -811,7 +819,7 @@ export default function TeacherDashboard() {
                     <div className="flex-1 p-6 overflow-y-auto space-y-4">
                       {chatMessages.map((msg, idx) => (
                         <div key={idx} className={msg.sender === 'System' ? 'flex justify-center' : (msg.sender === "อาจารย์" ? 'flex justify-end' : 'flex justify-start')}>
-                          <div className={`group relative p-4 rounded-2xl max-w-[85%] text-sm ${msg.sender === 'System' ? 'bg-[#1c2130] text-gray-400 border border-[#2a3041] text-center w-full' : (msg.sender === "อาจารย์" ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all text-white rounded-tr-none' : 'bg-[#1c2130] border border-[#2a3041] rounded-tl-none')}`}>
+                          <div className={`group relative p-4 rounded-2xl max-w-[85%] text-sm ${msg.sender === 'System' ? 'bg-[#1c2130] text-gray-400 border border-[#2a3041] text-center w-full' : (msg.sender === "อาจารย์" ? 'btn-holographic text-white rounded-tr-none' : 'bg-[#1c2130] border border-[#2a3041] rounded-tl-none')}`}>
                             {msg.sender === "อาจารย์" && msg.type === "text" && <button onClick={() => handlePinMessage(msg.text)} className="absolute -left-8 top-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white transition-opacity" title="ปักหมุดข้อความ">📌</button>}
                             {msg.sender !== 'System' && <p className={`text-xs mb-1 font-semibold ${msg.sender === "อาจารย์" ? 'text-blue-200' : 'text-blue-400'}`}>{msg.sender} <span className="text-xs opacity-70 ml-1">{msg.time}</span></p>}
                             {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p>{msg.text}</p>}
@@ -823,7 +831,7 @@ export default function TeacherDashboard() {
                       <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
                       <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-[#2a3041] rounded-xl text-gray-400 hover:text-white">📎</button>
                       <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="พิมพ์ข้อความ / สั่งงาน..." className="flex-1 bg-[#11141c] border border-[#2a3041] rounded-xl px-5 py-4 focus:outline-none focus:border-blue-500 text-sm text-white" />
-                      <button type="submit" className="bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all px-6 py-4 rounded-xl font-bold">ส่ง</button>
+                      <button type="submit" className="btn-holographic px-6 py-4 rounded-xl font-bold">ส่ง</button>
                     </form>
                   </div>
 
@@ -894,7 +902,7 @@ export default function TeacherDashboard() {
                                     <div className="flex items-center gap-2">
                                       {student.name}
                                       {isEjectedOrGpsOff && (
-                                        <span className="text-[10px] font-extrabold bg-gradient-to-r from-rose-400 to-rose-600 hover:from-rose-300 hover:to-rose-500 shadow-[0_4px_0_0_#be123c,0_10px_20px_rgba(225,29,72,0.3)] active:shadow-[0_0px_0_0_#be123c,0_0px_0px_rgba(225,29,72,0)] active:translate-y-[4px] transition-all text-white px-1.5 py-0.5 rounded animate-pulse">
+                                        <span className="text-[10px] font-extrabold btn-holographic text-white px-1.5 py-0.5 rounded animate-pulse">
                                           เด้งออก (ปิด GPS)
                                         </span>
                                       )}
@@ -911,7 +919,7 @@ export default function TeacherDashboard() {
                                     )}
                                   </td>
                                   <td className="p-4 text-center">
-                                    <span className="font-mono text-xs font-bold text-[#00b87c] bg-[#00b87c]/10 border border-[#00b87c]/30 px-2.5 py-1 rounded-lg inline-block">
+                                    <span className="font-mono text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#00b87c] animate-text-glow font-black bg-[#00b87c]/10 border border-[#00b87c]/30 px-2.5 py-1 rounded-lg inline-block">
                                       ⏱️ {formatDuration(student.totalActiveSeconds)}
                                     </span>
                                   </td>
@@ -953,7 +961,7 @@ export default function TeacherDashboard() {
                   <form onSubmit={handleSaveCourse} className="space-y-4">
                     <div><input name="newCourseCode" type="text" placeholder="รหัสวิชา (เช่น CPE101)" className="w-full bg-[#1c2130] border border-[#2a3041] focus:border-blue-500 text-white rounded-xl px-4 py-3 focus:outline-none" required /></div>
                     <div><input name="newCourseName" type="text" placeholder="ชื่อวิชา (เช่น Computer)" className="w-full bg-[#1c2130] border border-[#2a3041] focus:border-blue-500 text-white rounded-xl px-4 py-3 focus:outline-none" required /></div>
-                    <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 shadow-[0_4px_0_0_#1d4ed8,0_10px_20px_rgba(59,130,246,0.3)] active:shadow-[0_0px_0_0_#1d4ed8,0_0px_0px_rgba(59,130,246,0)] active:translate-y-[4px] transition-all hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg mt-4">บันทึกรายวิชา</button>
+                    <button type="submit" className="w-full btn-holographic hover:bg-blue-500 text-white font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] py-3 rounded-xl shadow-lg mt-4">บันทึกรายวิชา</button>
                   </form>
                 </div>
               </div>

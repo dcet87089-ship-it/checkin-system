@@ -72,9 +72,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-cosmic animate-gradient-bg relative overflow-hidden relative overflow-hidden">
       
-      {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
+      
+      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
+      
+      {/* 🌌 Animated Stars / Particles overlay */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
+{/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes spin-slow {
           100% { transform: rotate(360deg); }
@@ -108,7 +116,7 @@ export default function LoginPage() {
           {userPreview && (
             <div className="w-full mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center animate-fadeIn">
               <p className="text-xs text-emerald-400 font-bold">✅ พบบัญชีในฐานข้อมูล</p>
-              <p className="text-white font-bold text-lg mt-1">{userPreview.name}</p>
+              <p className="text-white font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-lg mt-1">{userPreview.name}</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 สถานะ: <span className="text-[#00e5ff] font-bold">{userPreview.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}</span>
               </p>
@@ -160,7 +168,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-white text-[#0d0b14] hover:bg-gray-200 font-extrabold py-4 rounded-full transition-all duration-300 shadow-[0_6px_0_0_#9ca3af,0_15px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_8px_0_0_#9ca3af,0_15px_40px_rgba(255,255,255,0.3)] active:translate-y-2 active:shadow-[0_0px_0_0_#9ca3af,0_0px_0px_rgba(255,255,255,0)] transform hover:-translate-y-1 disabled:opacity-50 tracking-wider"
+              className="w-full font-black py-4 rounded-full btn-holographic disabled:opacity-50"
             >
               {loading ? "กำลังเข้าสู่ระบบ..." : "LOGIN"}
             </button>

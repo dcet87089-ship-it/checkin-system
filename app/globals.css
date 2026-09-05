@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .animate-gradient-bg {
+    background-size: 300% 300%;
+    animation: gradientBG 10s ease infinite;
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+  .animate-pulse-glow {
+    animation: pulseGlow 3s infinite alternate;
+  }
+  .animate-border-spin {
+    animation: spinSlow 4s linear infinite;
+  }
+  .animate-text-glow {
+    animation: textGlow 2s ease-in-out infinite alternate;
+  }
+  .glass-panel {
+    background: rgba(15, 15, 30, 0.5);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .glass-panel:hover {
+    background: rgba(30, 25, 50, 0.6);
+    border: 1px solid rgba(0, 229, 255, 0.5);
+    box-shadow: 0 10px 40px 0 rgba(0, 229, 255, 0.4), inset 0 0 20px rgba(122, 0, 255, 0.3);
+    transform: translateY(-8px) scale(1.02);
+  }
+  .btn-holographic {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.8) 0%, rgba(122, 0, 255, 0.8) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .btn-holographic:hover {
+    background: linear-gradient(135deg, rgba(122, 0, 255, 0.9) 0%, rgba(255, 0, 160, 0.9) 100%);
+    box-shadow: 0 8px 25px rgba(255, 0, 160, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px) scale(1.05);
+    border-color: white;
+  }
+  .btn-holographic:active {
+    transform: translateY(2px) scale(0.98);
+    box-shadow: 0 2px 10px rgba(255, 0, 160, 0.4);
+  }
+  .neon-text {
+    color: #fff;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #00e5ff, 0 0 40px #00e5ff, 0 0 80px #00e5ff;
+  }
+  .bg-cosmic {
+    background: linear-gradient(-45deg, #090a0f, #1a0b2e, #0d071a, #040f25);
+  }
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 10px rgba(0,229,255,0.3); }
+  100% { box-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(122,0,255,0.6); }
+}
+
+@keyframes spinSlow {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes textGlow {
+  0% { text-shadow: 0 0 10px rgba(255, 0, 160, 0.5); }
+  100% { text-shadow: 0 0 20px rgba(255, 0, 160, 1), 0 0 40px rgba(0, 229, 255, 1); }
+}
