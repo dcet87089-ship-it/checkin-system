@@ -68,7 +68,12 @@ export interface StudentData {
   gpsActive?: boolean;
   gpsError?: string;
   joinTime?: string;
+  firstJoinTime?: string;
   lastSeen?: string;
+  totalActiveSeconds?: number;
+  lastTick?: number;
+  reconnectCount?: number;
+  leaveReason?: string;
 }
 
 export interface ChatMessage {

@@ -57,6 +57,14 @@ function calculateDistance(lat1?: number, lon1?: number, lat2?: number, lon2?: n
   return R * c;
 }
 
+function formatActiveDuration(totalSeconds?: number) {
+  if (!totalSeconds || totalSeconds <= 0) return "0 นาที";
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  if (mins === 0) return `${secs} วินาที`;
+  return `${mins} นาที ${secs} วินาที`;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState<'home' | 'schedule' | 'history'>('history');
@@ -141,30 +149,66 @@ export default function StudentDashboard() {
     }
   }, [router]);
 
-  // Heartbeat อัปเดตสถานะและพิกัด GPS ของนักศึกษาไปยัง Supabase ทุก 5-10 วินาที
+  // ฟังก์ชันเด้งนักศึกษาออกจากห้องเรียนทันทีเมื่อปิด GPS
+  const handleEjectForGpsOff = async (reason = "ปิด GPS ระหว่างเรียน") => {
+    if (!joinedClass || !userData) return;
+    const roomCode = joinedClass.code;
+    setJoinedClass(null); // เด้งออกจากห้องทันที
+    setIsScanning(false);
+
+    try {
+      const room = await getRoom(roomCode);
+      if (room && room.students) {
+        const nowMs = Date.now();
+        const updated = room.students.map((s: StudentData) => {
+          if (s.studentId === userData.userId) {
+            const deltaSec = s.lastTick ? Math.min(30, Math.max(0, Math.floor((nowMs - s.lastTick) / 1000))) : 0;
+            return {
+              ...s,
+              gpsActive: false,
+              status: "เด้งออก (ปิด GPS)",
+              leaveReason: reason,
+              totalActiveSeconds: (s.totalActiveSeconds || 0) + deltaSec,
+              lastTick: nowMs,
+              lastSeen: new Date().toISOString()
+            };
+          }
+          return s;
+        });
+        await updateRoom(roomCode, { students: updated });
+      }
+    } catch (e) {
+      console.error("Ejection sync error:", e);
+    }
+
+    alert("🚨 คุณถูกเด้งออกจากห้องเรียนทันที!\n\nสาเหตุ: มีการปิด GPS หรือไม่ยอมรับตำแหน่งพิกัดระหว่างเรียน\n\n📌 ระบบได้บันทึกเวลาเรียนสะสมไว้ให้แล้ว หากเปิด GPS แล้วเข้าห้องใหม่อีกครั้ง ระบบจะนับเวลาเรียนต่อกันทันที");
+  };
+
+  // Heartbeat อัปเดตสถานะและคำนวณเวลาเรียนสะสมต่อเนื่องทุก 5 วินาที
   useEffect(() => {
     if (joinedClass && userData) {
-      // ตรวจสอบสถานะ GPS เป็นระยะ เพื่อตรวจจับกรณีนักศึกษาปิด GPS ระหว่างเรียน
-      const verifyGpsActive = () => {
+      const interval = setInterval(async () => {
+        // ตรวจสอบสถานะ GPS อย่างต่อเนื่อง ถ้าปิดให้เด้งออกทันที
         if (!navigator.geolocation) {
           setIsGpsActive(false);
+          handleEjectForGpsOff("อุปกรณ์ไม่รองรับ GPS");
           return;
         }
+
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             setIsGpsActive(true);
           },
           (err) => {
-            console.warn("Student closed GPS:", err.message);
+            console.warn("Student closed GPS during class:", err.message);
             setIsGpsActive(false);
+            handleEjectForGpsOff("ตรวจพบการปิด GPS ในระหว่างเรียน");
           },
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
-      };
 
-      const interval = setInterval(async () => {
-        verifyGpsActive();
+        const nowMs = Date.now();
         const currentTime = new Date().toISOString();
         const distMeters = (teacherLocation.lat !== 0 && myLocation.lat !== 0 && isGpsActive)
           ? Math.round(calculateDistance(myLocation.lat, myLocation.lng, teacherLocation.lat, teacherLocation.lng))
@@ -172,25 +216,32 @@ export default function StudentDashboard() {
 
         let curStatus = "เข้าเรียน";
         if (!isGpsActive || myLocation.lat === 0) {
-          curStatus = "ปิด GPS";
+          curStatus = "เด้งออก (ปิด GPS)";
         } else if (distMeters !== undefined) {
           if (distMeters > 100) curStatus = "ไกลเกินพิกัด";
           else if (distMeters > 50) curStatus = "เฝ้าระวัง";
         }
 
-        const updatedStudents = currentStudents.map((s: StudentData) => 
-          s.studentId === userData.userId ? { 
-            ...s, 
-            lat: isGpsActive ? (myLocation.lat || s.lat) : 0,
-            lng: isGpsActive ? (myLocation.lng || s.lng) : 0,
-            distance: isGpsActive ? distMeters : undefined,
-            gpsActive: isGpsActive && myLocation.lat !== 0,
-            status: curStatus,
-            lastSeen: currentTime 
-          } : s
-        );
+        const updatedStudents = currentStudents.map((s: StudentData) => {
+          if (s.studentId === userData.userId) {
+            const deltaSec = s.lastTick ? Math.min(30, Math.max(0, Math.floor((nowMs - s.lastTick) / 1000))) : 5;
+            const accumulated = (s.totalActiveSeconds || 0) + deltaSec;
+            return { 
+              ...s, 
+              lat: isGpsActive ? (myLocation.lat || s.lat) : 0,
+              lng: isGpsActive ? (myLocation.lng || s.lng) : 0,
+              distance: isGpsActive ? distMeters : undefined,
+              gpsActive: isGpsActive && myLocation.lat !== 0,
+              status: curStatus,
+              totalActiveSeconds: accumulated,
+              lastTick: nowMs,
+              lastSeen: currentTime 
+            };
+          }
+          return s;
+        });
         await updateRoom(joinedClass.code, { students: updatedStudents });
-      }, 6000);
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [joinedClass, userData, currentStudents, myLocation, teacherLocation, isGpsActive]);
@@ -331,8 +382,13 @@ export default function StudentDashboard() {
 
       setJoinedClass({ code: courseCode, name: room.settings?.name || "กำลังเข้าเรียน..." });
       
+      const existingStudents = room.students || [];
+      const prevRecord = existingStudents.find((s: StudentData) => s.studentId === userData.userId);
+      const currentTimeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      const nowMs = Date.now();
+
       const newStudent: StudentData = {
-        id: Date.now(),
+        id: prevRecord?.id || nowMs,
         studentId: userData.userId, 
         name: userData.name,        
         major: "วิศวกรรมคอมพิวเตอร์", 
@@ -341,11 +397,15 @@ export default function StudentDashboard() {
         lng: curLoc.lng,
         distance: distMeters,
         gpsActive: true,
-        joinTime: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        joinTime: currentTimeStr,
+        firstJoinTime: prevRecord?.firstJoinTime || prevRecord?.joinTime || currentTimeStr,
+        totalActiveSeconds: prevRecord?.totalActiveSeconds || 0,
+        lastTick: nowMs,
+        reconnectCount: (prevRecord?.reconnectCount || 0) + (prevRecord ? 1 : 0),
+        leaveReason: undefined,
         lastSeen: new Date().toISOString()
       };
 
-      const existingStudents = room.students || [];
       const updated = existingStudents.filter((s: StudentData) => s.studentId !== userData.userId);
       updated.push(newStudent);
       setCurrentStudents(updated);
@@ -406,7 +466,20 @@ export default function StudentDashboard() {
 
   const handleLeaveRoom = async () => {
     if (joinedClass && userData) {
-      const updatedStudents = currentStudents.filter((s: StudentData) => s.studentId !== userData.userId);
+      const nowMs = Date.now();
+      const updatedStudents = currentStudents.map((s: StudentData) => {
+        if (s.studentId === userData.userId) {
+          const deltaSec = s.lastTick ? Math.min(30, Math.max(0, Math.floor((nowMs - s.lastTick) / 1000))) : 0;
+          return {
+            ...s,
+            status: "ออกจากห้องชั่วคราว",
+            totalActiveSeconds: (s.totalActiveSeconds || 0) + deltaSec,
+            lastTick: nowMs,
+            lastSeen: new Date().toISOString()
+          };
+        }
+        return s;
+      });
       await updateRoom(joinedClass.code, { students: updatedStudents });
       setJoinedClass(null);
     }
@@ -735,6 +808,28 @@ export default function StudentDashboard() {
                     </p>
                     <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold border ${statusColor} mb-6`}>
                       {statusMessage}
+                    </div>
+
+                    {/* ข้อมูลเวลาเรียนสะสม */}
+                    <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสมในคลาสนี้:</span>
+                        <span className="font-mono text-[#00b87c] font-black text-sm">
+                          {formatActiveDuration(currentStudents.find(s => s.studentId === userData.userId)?.totalActiveSeconds)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 font-medium">🕒 เข้าห้องครั้งแรก:</span>
+                        <span className="font-mono text-gray-300 font-bold">
+                          {currentStudents.find(s => s.studentId === userData.userId)?.firstJoinTime || currentStudents.find(s => s.studentId === userData.userId)?.joinTime || '-'}
+                        </span>
+                      </div>
+                      {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) > 0 && (
+                        <div className="flex justify-between items-center text-amber-400 pt-1 border-t border-gray-800/60">
+                          <span className="font-medium">🔄 สถานะการเชื่อมต่อ:</span>
+                          <span className="font-bold">เข้าเรียนต่อเนื่อง (ครั้งที่ {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) + 1})</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="w-full max-w-md bg-[#151822] border border-gray-800/80 rounded-xl p-4 text-xs space-y-2 text-left">
