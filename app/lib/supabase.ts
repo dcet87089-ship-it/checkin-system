@@ -65,6 +65,8 @@ export interface StudentData {
   lat?: number;
   lng?: number;
   distance?: number;
+  gpsActive?: boolean;
+  gpsError?: string;
   joinTime?: string;
   lastSeen?: string;
 }

@@ -68,6 +68,7 @@ export default function StudentDashboard() {
   const [joinCodeInput, setJoinCodeInput] = useState("");
 
   const [myLocation, setMyLocation] = useState({ lat: 0, lng: 0 });
+  const [isGpsActive, setIsGpsActive] = useState(true);
   const [teacherLocation, setTeacherLocation] = useState({ lat: 0, lng: 0 });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentStudents, setCurrentStudents] = useState<StudentData[]>([]); 
@@ -126,25 +127,53 @@ export default function StudentDashboard() {
 
     if (typeof window !== "undefined" && navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
-        (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (error: any) => console.warn("กำลังหาพิกัด GPS...", error.message),
-        { enableHighAccuracy: true }
+        (pos) => {
+          setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setIsGpsActive(true);
+        },
+        (error: any) => {
+          console.warn("กำลังหาพิกัด GPS หรือถูกปิด...", error.message);
+          setIsGpsActive(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, [router]);
 
-  // Heartbeat อัปเดตสถานะและพิกัด GPS ของนักศึกษาไปยัง Supabase ทุก 10 วินาที
+  // Heartbeat อัปเดตสถานะและพิกัด GPS ของนักศึกษาไปยัง Supabase ทุก 5-10 วินาที
   useEffect(() => {
     if (joinedClass && userData) {
+      // ตรวจสอบสถานะ GPS เป็นระยะ เพื่อตรวจจับกรณีนักศึกษาปิด GPS ระหว่างเรียน
+      const verifyGpsActive = () => {
+        if (!navigator.geolocation) {
+          setIsGpsActive(false);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setIsGpsActive(true);
+          },
+          (err) => {
+            console.warn("Student closed GPS:", err.message);
+            setIsGpsActive(false);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      };
+
       const interval = setInterval(async () => {
+        verifyGpsActive();
         const currentTime = new Date().toISOString();
-        const distMeters = (teacherLocation.lat !== 0 && myLocation.lat !== 0)
+        const distMeters = (teacherLocation.lat !== 0 && myLocation.lat !== 0 && isGpsActive)
           ? Math.round(calculateDistance(myLocation.lat, myLocation.lng, teacherLocation.lat, teacherLocation.lng))
           : undefined;
 
         let curStatus = "เข้าเรียน";
-        if (distMeters !== undefined) {
+        if (!isGpsActive || myLocation.lat === 0) {
+          curStatus = "ปิด GPS";
+        } else if (distMeters !== undefined) {
           if (distMeters > 100) curStatus = "ไกลเกินพิกัด";
           else if (distMeters > 50) curStatus = "เฝ้าระวัง";
         }
@@ -152,18 +181,19 @@ export default function StudentDashboard() {
         const updatedStudents = currentStudents.map((s: StudentData) => 
           s.studentId === userData.userId ? { 
             ...s, 
-            lat: myLocation.lat || s.lat,
-            lng: myLocation.lng || s.lng,
-            distance: distMeters !== undefined ? distMeters : s.distance,
+            lat: isGpsActive ? (myLocation.lat || s.lat) : 0,
+            lng: isGpsActive ? (myLocation.lng || s.lng) : 0,
+            distance: isGpsActive ? distMeters : undefined,
+            gpsActive: isGpsActive && myLocation.lat !== 0,
             status: curStatus,
             lastSeen: currentTime 
           } : s
         );
         await updateRoom(joinedClass.code, { students: updatedStudents });
-      }, 10000);
+      }, 6000);
       return () => clearInterval(interval);
     }
-  }, [joinedClass, userData, currentStudents, myLocation, teacherLocation]);
+  }, [joinedClass, userData, currentStudents, myLocation, teacherLocation, isGpsActive]);
 
   // Realtime listener สำหรับห้องเรียนที่เข้าร่วม
   useEffect(() => {
@@ -310,6 +340,7 @@ export default function StudentDashboard() {
         lat: curLoc.lat,
         lng: curLoc.lng,
         distance: distMeters,
+        gpsActive: true,
         joinTime: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
         lastSeen: new Date().toISOString()
       };
@@ -437,13 +468,18 @@ export default function StudentDashboard() {
     </div>
   );
 
+  const isGpsOff = !isGpsActive || myLocation.lat === 0;
   const dist = calculateDistance(myLocation.lat, myLocation.lng, teacherLocation.lat, teacherLocation.lng);
   
   let statusColor = "";
   let statusMessage = "";
   let distTextColor = "";
 
-  if (dist <= 50) {
+  if (isGpsOff) {
+      statusColor = "bg-rose-500/20 text-rose-500 border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.3)] animate-pulse";
+      statusMessage = "🚨 คุณปิด GPS! (ระบบแจ้งอาจารย์แล้ว / ถือว่าขาดเรียน)";
+      distTextColor = "text-rose-500";
+  } else if (dist <= 50) {
       statusColor = "bg-[#00b87c]/10 text-[#00b87c] border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
       statusMessage = "✅ ระยะปลอดภัย (สถานะ: เข้าเรียน)";
       distTextColor = "text-[#00b87c]";
@@ -464,7 +500,30 @@ export default function StudentDashboard() {
   const errorClasses = historyData.filter(h => h.type === 'error').length; 
 
   return (
-    <div className="flex min-h-screen bg-[#0d1017] text-gray-200 font-sans">
+    <div className="flex min-h-screen bg-[#0d1017] text-gray-200 font-sans relative">
+      
+      {/* แบนเนอร์แจ้งเตือนฉุกเฉินเมื่อนักศึกษาปิด GPS ระหว่างเรียน */}
+      {isGpsOff && joinedClass && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600 border-2 border-white text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 max-w-xl w-[92%] animate-bounce">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🚨</span>
+            <div>
+              <p className="font-black text-base">ระบบตรวจพบว่าคุณ "ปิด GPS"!</p>
+              <p className="text-xs text-rose-100">สถานะถูกส่งแจ้งเตือนอาจารย์แล้ว กรุณากดเปิดสิทธิ์ GPS ทันทีเพื่อรักษาสิทธิ์การเข้าเรียน</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              const loc = await requestStudentGPS();
+              if (loc && loc.lat !== 0) setIsGpsActive(true);
+            }}
+            className="bg-white text-rose-600 font-black text-xs px-4 py-2.5 rounded-xl whitespace-nowrap hover:bg-rose-50 shadow transition-colors"
+          >
+            เปิด GPS ทันที
+          </button>
+        </div>
+      )}
       
       {/* Modal เพิ่มวิชาเรียน */}
       {showAddCourseModal && (

@@ -148,6 +148,26 @@ export default function TeacherDashboard() {
     };
   }, [fetchMyHistory]);
 
+  const playAlertSound = () => {
+    try {
+      if (typeof window === "undefined") return;
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    } catch {
+      // Audio context might be restricted before first interaction
+    }
+  };
+
   // === ดักฟังข้อมูลห้องเรียนแบบ Live ผ่าน Supabase Realtime ===
   useEffect(() => {
     if (isRoomActive && roomCode) {
@@ -164,7 +184,16 @@ export default function TeacherDashboard() {
       const unsubscribe = subscribeToRoom(
         roomCode,
         (room) => {
-          setCurrentStudents(room.students || []);
+          const newStudents: StudentData[] = room.students || [];
+          // ตรวจสอบว่ามีนักศึกษาคนใดเพิ่งปิด GPS หรือไม่
+          const newlyDisabled = newStudents.filter(
+            (ns) => ns.gpsActive === false || ns.status === 'ปิด GPS' || (!ns.lat && !ns.lng)
+          );
+          if (newlyDisabled.length > 0) {
+            playAlertSound();
+          }
+
+          setCurrentStudents(newStudents);
           setChatMessages(room.chat || []);
           setPinnedMessage(room.settings?.pinnedMessage || null);
         },
@@ -623,6 +652,26 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
+                {/* แถบแจ้งเตือนอาจารย์เมื่อมีนักศึกษาปิด GPS */}
+                {currentStudents.some(s => s.gpsActive === false || s.status === 'ปิด GPS' || (!s.lat && !s.lng)) && (
+                  <div className="mb-6 bg-rose-950/80 border-2 border-rose-500 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_25px_rgba(244,63,94,0.4)] animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl animate-bounce">🚨</span>
+                      <div>
+                        <h4 className="font-bold text-white text-base flex items-center gap-2">
+                          แจ้งเตือนอาจารย์: มีนักศึกษา "ปิด GPS" ระหว่างเรียน ({currentStudents.filter(s => s.gpsActive === false || s.status === 'ปิด GPS' || (!s.lat && !s.lng)).length} คน)!
+                        </h4>
+                        <p className="text-rose-200 text-xs mt-1">
+                          รายชื่อ: {currentStudents.filter(s => s.gpsActive === false || s.status === 'ปิด GPS' || (!s.lat && !s.lng)).map(s => `${s.name} (${s.studentId})`).join(', ')}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="bg-rose-600 text-white font-black text-xs px-3 py-1.5 rounded-xl uppercase tracking-wider whitespace-nowrap self-start md:self-auto">
+                      ตรวจพบการปิด GPS
+                    </span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 min-h-0">
                   <div className="bg-[#161a26] border border-[#232938] rounded-3xl flex flex-col overflow-hidden shadow-xl">
                     <div className="p-5 border-b border-[#232938] flex items-center gap-2">
@@ -655,8 +704,20 @@ export default function TeacherDashboard() {
 
                   <div className="bg-[#161a26] border border-[#232938] rounded-3xl flex flex-col overflow-hidden shadow-xl">
                     <div className="p-5 border-b border-[#232938] flex justify-between items-center">
-                      <div className="flex items-center gap-2"><span className="text-red-400">📍</span><h3 className="font-bold text-white">สถานะนักศึกษา Real-time</h3></div>
-                      <div className="text-sm font-bold text-blue-400 bg-blue-900/20 px-3 py-1 rounded-full">{currentStudents.length} / {maxStudents} คน</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-400">📍</span>
+                        <h3 className="font-bold text-white">สถานะนักศึกษา Real-time</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {currentStudents.some(s => s.gpsActive === false || s.status === 'ปิด GPS' || (!s.lat && !s.lng)) && (
+                          <span className="text-xs font-bold text-rose-300 bg-rose-900/50 border border-rose-500/50 px-2.5 py-1 rounded-full animate-pulse">
+                            🚨 ปิด GPS: {currentStudents.filter(s => s.gpsActive === false || s.status === 'ปิด GPS' || (!s.lat && !s.lng)).length} คน
+                          </span>
+                        )}
+                        <div className="text-sm font-bold text-blue-400 bg-blue-900/20 px-3 py-1 rounded-full">
+                          {currentStudents.length} / {maxStudents} คน
+                        </div>
+                      </div>
                     </div>
                     <div className="flex-1 overflow-auto">
                       <table className="w-full text-left text-sm">
@@ -668,23 +729,53 @@ export default function TeacherDashboard() {
                             <tr><td colSpan={5} className="p-10 text-center text-gray-500">ยังไม่มีนักศึกษาสแกนเข้าเรียนในขณะนี้...</td></tr>
                           ) : (
                             currentStudents.map((student) => {
+                              const isGpsOff = student.gpsActive === false || student.status === "ปิด GPS" || (!student.lat && !student.lng);
                               const dist = student.lat ? calculateDistance(teacherLocation.lat, teacherLocation.lng, student.lat, student.lng) : 0;
                               const timeMissing = new Date().getTime() - (student.lastSeen ? new Date(student.lastSeen).getTime() : 0);
-                              let statusColor = "bg-emerald-500"; let bgRow = ""; let statusText = "ปกติ";
-                              if (timeMissing > 60000 || dist > 100) { statusColor = "bg-red-500"; bgRow = "bg-red-900/10"; statusText = dist > 100 ? "ไกลเกิน" : "ขาดการเชื่อมต่อ"; } 
-                              else if (timeMissing > 20000 || dist > 50) { statusColor = "bg-yellow-500"; bgRow = "bg-yellow-900/10"; statusText = dist > 50 ? "เฝ้าระวัง" : "ซ่อนแอป"; }
+                              
+                              let statusColor = "bg-emerald-500"; 
+                              let bgRow = ""; 
+                              let statusText = "ปกติ";
+
+                              if (isGpsOff) {
+                                statusColor = "bg-rose-600";
+                                bgRow = "bg-rose-950/40 border-l-4 border-rose-500";
+                                statusText = "🚨 ปิด GPS!";
+                              } else if (timeMissing > 60000 || dist > 100) { 
+                                statusColor = "bg-red-500"; 
+                                bgRow = "bg-red-900/10"; 
+                                statusText = dist > 100 ? "ไกลเกิน" : "ขาดการเชื่อมต่อ"; 
+                              } else if (timeMissing > 20000 || dist > 50) { 
+                                statusColor = "bg-yellow-500"; 
+                                bgRow = "bg-yellow-900/10"; 
+                                statusText = dist > 50 ? "เฝ้าระวัง" : "ซ่อนแอป"; 
+                              }
+
                               return (
-                                <tr key={student.studentId} className={`hover:bg-[#1c2130] ${bgRow}`}>
+                                <tr key={student.studentId} className={`hover:bg-[#1c2130] transition-colors ${bgRow}`}>
                                   <td className="p-4 font-mono text-gray-300">{student.studentId}</td>
-                                  <td className="p-4 font-bold text-white">{student.name}</td>
+                                  <td className="p-4 font-bold text-white">
+                                    <div className="flex items-center gap-2">
+                                      {student.name}
+                                      {isGpsOff && (
+                                        <span className="text-[10px] font-extrabold bg-rose-600 text-white px-1.5 py-0.5 rounded">
+                                          ปิด GPS
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
                                   <td className="p-4 text-center text-gray-400">{student.joinTime}</td>
                                   <td className="p-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
-                                      <div className={`w-2 h-2 rounded-full animate-pulse ${statusColor}`}></div>
-                                      <span className={statusColor === 'bg-emerald-500' ? 'text-emerald-400' : (statusColor === 'bg-yellow-500' ? 'text-yellow-400' : 'text-red-400')}>{statusText} ({dist.toFixed(0)}ม.)</span>
+                                      <div className={`w-2.5 h-2.5 rounded-full ${statusColor} ${isGpsOff ? 'animate-ping' : 'animate-pulse'}`}></div>
+                                      <span className={`font-bold ${isGpsOff ? 'text-rose-400 font-black' : (statusColor === 'bg-emerald-500' ? 'text-emerald-400' : (statusColor === 'bg-yellow-500' ? 'text-yellow-400' : 'text-red-400'))}`}>
+                                        {statusText} {isGpsOff ? '' : `(${dist.toFixed(0)}ม.)`}
+                                      </span>
                                     </div>
                                   </td>
-                                  <td className="p-4 text-center"><button onClick={() => handleKickStudent(student.studentId)} className="text-gray-500 hover:text-red-400 px-3 py-1 rounded-lg border border-[#2a3041] hover:border-red-500/30">นำออก</button></td>
+                                  <td className="p-4 text-center">
+                                    <button onClick={() => handleKickStudent(student.studentId)} className="text-gray-500 hover:text-red-400 px-3 py-1 rounded-lg border border-[#2a3041] hover:border-red-500/30">นำออก</button>
+                                  </td>
                                 </tr>
                               );
                             })
