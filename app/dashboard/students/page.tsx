@@ -3,33 +3,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Scanner } from '@yudiel/react-qr-scanner';
 
-// === 1. นำเข้า Firebase ===
-import { db, auth } from '../../lib/supabase';
-import { doc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+// === นำเข้า Supabase ===
+import { 
+  getRoom, 
+  updateRoom, 
+  getAllHistory, 
+  subscribeToRoom, 
+  getSchedulesByStudent,
+  addSchedule,
+  deleteSchedule,
+  isSupabaseConfigured,
+  StudentData, 
+  ChatMessage, 
+  HistoryRecord 
+} from '../../lib/supabase';
 
 interface UserDataType {
   name: string;
   userId: string;
   role: string;
-}
-
-interface StudentType {
-  id?: number;
-  studentId: string;
-  name: string;
-  major?: string;
-  status?: string;
-  lat?: number;
-  lng?: number;
-  joinTime?: string;
-  lastSeen?: string;
-}
-
-interface ChatMessageType {
-  sender: string;
-  text: string;
-  time: string;
 }
 
 interface HistoryRecordType {
@@ -64,13 +56,14 @@ export default function StudentDashboard() {
 
   const [myLocation, setMyLocation] = useState({ lat: 0, lng: 0 });
   const [teacherLocation, setTeacherLocation] = useState({ lat: 0, lng: 0 });
-  const [chatMessages, setChatMessages] = useState<ChatMessageType[]>([]);
-  const [currentStudents, setCurrentStudents] = useState<StudentType[]>([]); 
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [currentStudents, setCurrentStudents] = useState<StudentData[]>([]); 
 
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [historyData, setHistoryData] = useState<HistoryRecordType[]>([]);
   
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [configured, setConfigured] = useState(true);
 
   const currentMonth = calendarDate.getMonth();
   const currentYear = calendarDate.getFullYear();
@@ -85,15 +78,40 @@ export default function StudentDashboard() {
   const [refreshSchedule, setRefreshSchedule] = useState(0);
 
   useEffect(() => {
+    setConfigured(isSupabaseConfigured());
     const storedData = localStorage.getItem(Object.keys(localStorage)[0] || "");
     if (storedData) {
-      setUserData(JSON.parse(storedData));
+      try {
+        const parsed = JSON.parse(storedData);
+        if (parsed.role !== 'student') {
+          router.push('/');
+          return;
+        }
+        setUserData(parsed);
+        if (parsed.userId) {
+          getSchedulesByStudent(parsed.userId).then((dbSchedules) => {
+            if (dbSchedules && dbSchedules.length > 0) {
+              const schedMap: Record<string, any[]> = {};
+              dbSchedules.forEach((s) => {
+                if (!schedMap[s.day]) schedMap[s.day] = [];
+                schedMap[s.day].push(s);
+              });
+              localStorage.setItem('my_schedule', JSON.stringify(schedMap));
+              setRefreshSchedule((p) => p + 1);
+            }
+          });
+        }
+      } catch {
+        router.push('/');
+        return;
+      }
     } else {
       router.push('/');
+      return;
     }
     setLoading(false);
 
-    if (navigator.geolocation) {
+    if (typeof window !== "undefined" && navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         (error: any) => console.warn("กำลังหาพิกัด GPS...", error.message),
@@ -103,81 +121,82 @@ export default function StudentDashboard() {
     }
   }, [router]);
 
+  // Heartbeat อัปเดตสถานะของนักศึกษาไปยัง Supabase ทุก 10 วินาที
   useEffect(() => {
     if (joinedClass && userData) {
       const interval = setInterval(async () => {
-        const roomRef = doc(db, "rooms", joinedClass.code);
         const currentTime = new Date().toISOString();
-        const updatedStudents = currentStudents.map((s: StudentType) => 
+        const updatedStudents = currentStudents.map((s: StudentData) => 
           s.studentId === userData.userId ? { ...s, lastSeen: currentTime } : s
         );
-        await updateDoc(roomRef, { students: updatedStudents });
+        await updateRoom(joinedClass.code, { students: updatedStudents });
       }, 10000);
       return () => clearInterval(interval);
     }
   }, [joinedClass, userData, currentStudents]);
 
+  // Realtime listener สำหรับห้องเรียนที่เข้าร่วม
   useEffect(() => {
     if (joinedClass && userData) {
-      const roomRef = doc(db, "rooms", joinedClass.code);
-      const unsubscribe = onSnapshot(roomRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const roomData = docSnap.data();
-          setTeacherLocation(roomData.teacherLocation || { lat: 0, lng: 0 });
-          setChatMessages(roomData.chat || []);
-          setCurrentStudents(roomData.students || []);
+      getRoom(joinedClass.code).then((room) => {
+        if (room) {
+          setTeacherLocation(room.teacher_location || room.teacherLocation || { lat: 0, lng: 0 });
+          setChatMessages(room.chat || []);
+          setCurrentStudents(room.students || []);
+        }
+      });
 
-          const isMeInside = roomData.students?.some((s: StudentType) => s.studentId === userData.userId);
-          if (!isMeInside && roomData.students?.length > 0) {
+      const unsubscribe = subscribeToRoom(
+        joinedClass.code,
+        (room) => {
+          setTeacherLocation(room.teacher_location || room.teacherLocation || { lat: 0, lng: 0 });
+          setChatMessages(room.chat || []);
+          setCurrentStudents(room.students || []);
+
+          const isMeInside = room.students?.some((s: StudentData) => s.studentId === userData.userId);
+          if (!isMeInside && (room.students?.length || 0) > 0) {
             alert("คุณถูกอาจารย์เชิญออกจากห้องเรียน");
             setJoinedClass(null); 
           }
-        } else {
+        },
+        () => {
           alert("อาจารย์ได้ทำการยุบห้องเรียนแล้ว");
           setJoinedClass(null);
         }
-      });
+      );
       return () => unsubscribe();
     }
   }, [joinedClass, userData]);
 
+  // ดึงประวัติการเรียนของนักศึกษา
   useEffect(() => {
     if (activeMenu === 'history' && userData) {
       const fetchMyHistory = async () => {
         try {
-          const q = query(collection(db, "history"), orderBy("timestamp", "desc"));
-          const snap = await getDocs(q);
+          const allHistory = await getAllHistory();
           const myRecords: HistoryRecordType[] = [];
           
-          snap.docs.forEach((docSnap: any) => {
-            const data = docSnap.data();
-            const myRecord = data.studentsData?.find((s: StudentType) => s.studentId === userData.userId);
+          allHistory.forEach((record: HistoryRecord) => {
+            const myRecord = record.studentsData?.find((s: StudentData) => s.studentId === userData.userId);
             
             if (myRecord) {
               const lastSeenTime = myRecord.lastSeen ? new Date(myRecord.lastSeen).getTime() : 0;
-              const classEndTime = new Date(data.timestamp).getTime();
+              const classEndTime = new Date(record.timestamp).getTime();
               const isOffline = (classEndTime - lastSeenTime) > 60000;
-              const dateObj = new Date(data.timestamp);
+              const dateObj = new Date(record.timestamp);
               
               myRecords.push({
-                id: docSnap.id,
+                id: record.id,
                 day: dateObj.getDate(),
-                dateStr: data.dateStr,
-                code: data.courseCode,
-                name: data.courseName,
+                dateStr: record.dateStr,
+                code: record.courseCode,
+                name: record.courseName,
                 time: myRecord.joinTime || '-',
                 status: isOffline ? "ออฟไลน์ก่อนปิด" : "เข้าเรียนปกติ",
                 type: isOffline ? "warning" : "success"
               });
             }
           });
-
-          // ข้อมูล Mock จำลองสำหรับตกแต่ง UI ให้เหมือนหน้าจอตัวอย่าง (เพื่อความสมจริง)
-          if(myRecords.length === 0) {
-             myRecords.push({ id: '1', day: 5, dateStr: '05 ก.ค. 2026', code: 'CPE101', name: 'Computer Programming', time: '09:05 น.', status: 'เข้าเรียน', type: 'success', distance: 15 });
-             myRecords.push({ id: '2', day: 3, dateStr: '03 ก.ค. 2026', code: 'MATH203', name: 'Calculus', time: '13:10 น.', status: 'เฝ้าระวัง', type: 'warning', distance: 85 });
-             myRecords.push({ id: '3', day: 28, dateStr: '28 มิ.ย. 2026', code: 'CPE101', name: 'Computer Programming', time: '-', status: 'ขาดเรียน', type: 'error' });
-          }
 
           setHistoryData(myRecords);
         } catch (error) {
@@ -188,8 +207,9 @@ export default function StudentDashboard() {
     }
   }, [activeMenu, userData]);
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
+    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 0;
+    if (lat1 === 0 && lon1 === 0 && lat2 === 0 && lon2 === 0) return 0;
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
@@ -205,13 +225,12 @@ export default function StudentDashboard() {
     setIsScanning(false);
     setJoinCodeInput(""); 
 
-    const roomRef = doc(db, "rooms", courseCode);
-    const roomSnap = await getDoc(roomRef);
+    const room = await getRoom(courseCode);
 
-    if (roomSnap.exists()) {
-      setJoinedClass({ code: courseCode, name: roomSnap.data().settings?.name || "กำลังเข้าเรียน..." });
+    if (room) {
+      setJoinedClass({ code: courseCode, name: room.settings?.name || "กำลังเข้าเรียน..." });
       
-      const newStudent = {
+      const newStudent: StudentData = {
         id: Date.now(),
         studentId: userData.userId, 
         name: userData.name,        
@@ -223,7 +242,11 @@ export default function StudentDashboard() {
         lastSeen: new Date().toISOString()
       };
 
-      await updateDoc(roomRef, { students: arrayUnion(newStudent) });
+      const existingStudents = room.students || [];
+      const updated = existingStudents.filter((s: StudentData) => s.studentId !== userData.userId);
+      updated.push(newStudent);
+      setCurrentStudents(updated);
+      await updateRoom(courseCode, { students: updated });
     } else {
       alert("ไม่พบห้องเรียนนี้ หรืออาจารย์ยังไม่ได้เปิดคลาส");
     }
@@ -242,15 +265,7 @@ export default function StudentDashboard() {
     e.preventDefault();
     if (!joinCodeInput) return;
     try {
-      const roomsRef = collection(db, "rooms");
-      const q = query(roomsRef, where("settings.joinCode", "==", joinCodeInput));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        joinRoom(querySnapshot.docs[0].id);
-      } else {
-        alert("รหัสห้องไม่ถูกต้อง หรืออาจารย์ยังไม่ได้เปิดห้องเรียนนี้");
-      }
+      await joinRoom(joinCodeInput.trim());
     } catch (error) {
       alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
     }
@@ -258,9 +273,8 @@ export default function StudentDashboard() {
 
   const handleLeaveRoom = async () => {
     if (joinedClass && userData) {
-      const roomRef = doc(db, "rooms", joinedClass.code);
-      const updatedStudents = currentStudents.filter((s: StudentType) => s.studentId !== userData.userId);
-      await updateDoc(roomRef, { students: updatedStudents });
+      const updatedStudents = currentStudents.filter((s: StudentData) => s.studentId !== userData.userId);
+      await updateRoom(joinedClass.code, { students: updatedStudents });
       setJoinedClass(null);
     }
   };
@@ -269,14 +283,20 @@ export default function StudentDashboard() {
     e.preventDefault();
     const input = e.currentTarget.elements.namedItem("message") as HTMLInputElement;
     if (input.value && joinedClass) {
-      const newMsg = { sender: userData?.name || "Student", text: input.value, time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) };
-      const roomRef = doc(db, "rooms", joinedClass.code);
-      await updateDoc(roomRef, { chat: arrayUnion(newMsg) });
+      const newMsg: ChatMessage = { 
+        sender: userData?.name || "Student", 
+        text: input.value, 
+        time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        type: "text"
+      };
+      const updated = [...chatMessages, newMsg];
+      setChatMessages(updated);
+      await updateRoom(joinedClass.code, { chat: updated });
       input.value = "";
     }
   };
 
-  const handleSaveCourse = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveCourse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const code = (form.elements.namedItem("code") as HTMLInputElement).value;
@@ -285,24 +305,27 @@ export default function StudentDashboard() {
     const time = (form.elements.namedItem("time") as HTMLInputElement).value;
     const location = (form.elements.namedItem("location") as HTMLInputElement).value;
 
-    if(code && day) {
+    if (code && day && userData) {
+      const added = await addSchedule({
+        studentId: userData.userId,
+        code,
+        name,
+        day,
+        time,
+        location
+      });
       const sched = JSON.parse(localStorage.getItem('my_schedule') || "{}");
-      if(!sched[day]) sched[day] = [];
-      sched[day].push({ id: Date.now(), code, name, time, location });
+      if (!sched[day]) sched[day] = [];
+      sched[day].push(added || { id: Date.now(), code, name, time, location });
       localStorage.setItem('my_schedule', JSON.stringify(sched));
       setShowAddCourseModal(false); 
       setRefreshSchedule(prev => prev + 1); 
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      localStorage.clear(); 
-      router.push('/');
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+  const handleLogout = () => {
+    localStorage.clear(); 
+    router.push('/');
   };
 
   if (loading || !userData) return (
@@ -333,10 +356,10 @@ export default function StudentDashboard() {
   }
 
   const filteredHistory = selectedDate ? historyData.filter((h: HistoryRecordType) => h.day === selectedDate) : historyData;
-  const totalClasses = 24; // Mock values for exact UI matching
-  const successClasses = 20; 
-  const warningClasses = 3; 
-  const errorClasses = 1; 
+  const totalClasses = historyData.length; 
+  const successClasses = historyData.filter(h => h.type === 'success').length; 
+  const warningClasses = historyData.filter(h => h.type === 'warning').length; 
+  const errorClasses = historyData.filter(h => h.type === 'error').length; 
 
   return (
     <div className="flex min-h-screen bg-[#0d1017] text-gray-200 font-sans">
@@ -424,6 +447,11 @@ export default function StudentDashboard() {
 
       {/* Main Content Area */}
       <div className="flex-1 p-6 md:p-10 overflow-y-auto h-screen scroll-smooth">
+        {!configured && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+            ⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code>
+          </div>
+        )}
         
         {/* =========================================
             หน้า 1: เข้าเรียน (Live Room) 
@@ -453,7 +481,7 @@ export default function StudentDashboard() {
 
                 <div className="flex items-center gap-4 mb-8 opacity-50">
                   <div className="h-px bg-gray-700 flex-1"></div>
-                  <span className="text-gray-400 text-sm">หรือเผื่อกล้องไม่ดี</span>
+                  <span className="text-gray-400 text-sm">หรือใส่รหัส 6 หลัก</span>
                   <div className="h-px bg-gray-700 flex-1"></div>
                 </div>
 
@@ -481,10 +509,10 @@ export default function StudentDashboard() {
                     <h3 className="font-bold text-white text-sm">💬 แชทห้องเรียน</h3>
                   </div>
                   <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-                    {chatMessages.map((msg: ChatMessageType, idx: number) => (
+                    {chatMessages.map((msg: ChatMessage, idx: number) => (
                       <div key={`chat-${idx}`} className={`p-3 rounded-xl max-w-[85%] ${msg.sender === userData.name ? 'bg-[#00b87c]/20 border border-[#00b87c]/30 ml-auto rounded-tr-none' : msg.sender === 'System' ? 'bg-gray-800/50 mx-auto text-center border border-gray-700' : 'bg-[#0d1017] border border-gray-800 rounded-tl-none'}`}>
                         {msg.sender !== 'System' && <p className={`text-xs mb-1 font-bold ${msg.sender === userData.name ? 'text-[#00b87c]' : 'text-blue-400'}`}>{msg.sender} <span className="text-gray-500 font-normal ml-2">{msg.time}</span></p>}
-                        <p className={`text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>
+                        {msg.type === "image" ? <img src={msg.imageUrl} alt="img" className="mt-2 rounded-lg max-w-full max-h-48 object-contain" /> : <p className={`text-sm ${msg.sender === 'System' ? 'text-gray-400 text-xs' : 'text-gray-200'}`}>{msg.text}</p>}
                       </div>
                     ))}
                   </div>
@@ -578,7 +606,7 @@ export default function StudentDashboard() {
         )}
 
         {/* =========================================
-            หน้า 3: ประวัติและสถิติ (อิงตามเลย์เอาต์รูปภาพล่าสุด)
+            หน้า 3: ประวัติและสถิติ
             ========================================= */}
         {activeMenu === 'history' && (
           <div className="animate-fadeIn max-w-[1400px] mx-auto w-full">
@@ -628,10 +656,16 @@ export default function StudentDashboard() {
                        let bgColor = "hover:bg-gray-800 text-gray-300 border border-transparent";
                        let isSpecial = false;
                        
-                       // Match กับรูป Calendar ตรงๆ
-                       if (day === 5) { bgColor = "bg-[#00b87c] text-white rounded-lg"; isSpecial = true; } 
-                       else if (day === 3) { bgColor = "bg-amber-900/40 text-amber-500 border border-amber-500/50 rounded-lg"; isSpecial = true; }
-                       else if (day === 28) { bgColor = "bg-rose-900/40 text-rose-500 border border-rose-500/50 rounded-lg"; isSpecial = true; }
+                       if (dayRecords.length > 0) {
+                         isSpecial = true;
+                         if (dayRecords.some(r => r.type === 'error')) {
+                           bgColor = "bg-rose-900/40 text-rose-500 border border-rose-500/50 rounded-lg";
+                         } else if (dayRecords.some(r => r.type === 'warning')) {
+                           bgColor = "bg-amber-900/40 text-amber-500 border border-amber-500/50 rounded-lg";
+                         } else {
+                           bgColor = "bg-[#00b87c] text-white rounded-lg";
+                         }
+                       }
 
                        return (
                          <button 

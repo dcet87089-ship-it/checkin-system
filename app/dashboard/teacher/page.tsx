@@ -14,6 +14,9 @@ import {
   deleteHistory, 
   subscribeToRoom, 
   subscribeToHistory,
+  getCoursesByTeacher,
+  addCourse,
+  deleteCourse,
   isSupabaseConfigured,
   HistoryRecord,
   StudentData,
@@ -72,14 +75,27 @@ export default function TeacherDashboard() {
     let teacherUser: any = null;
     if (storedData) {
       teacherUser = JSON.parse(storedData);
+      if (teacherUser.role !== 'teacher') {
+        router.push('/');
+        return;
+      }
       setUserData(teacherUser);
     } else {
-      teacherUser = { name: "อาจารย์ทดสอบ", role: "teacher" };
-      setUserData(teacherUser);
+      router.push('/');
+      return;
     }
     
-    const loadedCourses = JSON.parse(localStorage.getItem('teacher_saved_courses') || "[]");
-    setSavedCourses(loadedCourses);
+    const teacherIdentifier = teacherUser?.userId || teacherUser?.email || teacherUser?.name || 'teacher';
+    getCoursesByTeacher(teacherIdentifier).then((dbCourses) => {
+      if (dbCourses && dbCourses.length > 0) {
+        setSavedCourses(dbCourses);
+        localStorage.setItem('teacher_saved_courses', JSON.stringify(dbCourses));
+      } else {
+        const loadedCourses = JSON.parse(localStorage.getItem('teacher_saved_courses') || "[]");
+        setSavedCourses(loadedCourses);
+        loadedCourses.forEach((c: any) => addCourse({ code: c.code, name: c.name, teacherId: teacherIdentifier }));
+      }
+    });
     setLoading(false);
 
     if (navigator.geolocation) {
@@ -329,13 +345,15 @@ export default function TeacherDashboard() {
     await updateRoom(roomCode, { students: updatedStudents });
   };
 
-  const handleSaveCourse = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveCourse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const code = (form.elements.namedItem("newCourseCode") as HTMLInputElement).value;
     const name = (form.elements.namedItem("newCourseName") as HTMLInputElement).value;
     if (code && name) {
-      const newCourse = { id: Date.now(), code, name };
+      const teacherIdentifier = userData?.userId || userData?.email || userData?.name || 'teacher';
+      const added = await addCourse({ code, name, teacherId: teacherIdentifier });
+      const newCourse = added || { id: Date.now().toString(), code, name, teacherId: teacherIdentifier };
       const updatedCourses = [...savedCourses, newCourse];
       setSavedCourses(updatedCourses);
       localStorage.setItem('teacher_saved_courses', JSON.stringify(updatedCourses));
@@ -343,13 +361,21 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleDeleteCourse = async (courseId: string) => {
+    await deleteCourse(courseId);
+    const updated = savedCourses.filter(c => c.id !== courseId);
+    setSavedCourses(updated);
+    localStorage.setItem('teacher_saved_courses', JSON.stringify(updated));
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     router.push('/');
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
+    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 0;
+    if (lat1 === 0 && lon1 === 0 && lat2 === 0 && lon2 === 0) return 0;
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
@@ -392,7 +418,7 @@ export default function TeacherDashboard() {
     return { sessions: courseRecords, students: allStudents };
   };
 
-  const calculateMinutesInClass = (joinTimeStr: string, classEndIso: string) => {
+  const calculateMinutesInClass = (joinTimeStr?: string, classEndIso?: string) => {
     if (!joinTimeStr || !classEndIso) return 0;
     const [joinH, joinM] = joinTimeStr.split(':').map(Number);
     const endDate = new Date(classEndIso);
@@ -629,7 +655,7 @@ export default function TeacherDashboard() {
                       {savedCourses.map((course: any) => (
                         <div key={course.id} className="bg-[#1c2130] p-4 rounded-2xl border border-[#2a3041] flex justify-between items-center group">
                           <div><p className="font-bold text-blue-400">{course.code}</p><p className="text-sm text-white mt-1">{course.name}</p></div>
-                          <button onClick={() => { const updated = savedCourses.filter(c => c.id !== course.id); setSavedCourses(updated); localStorage.setItem('teacher_saved_courses', JSON.stringify(updated)); }} className="text-gray-500 hover:text-red-400">🗑️</button>
+                          <button onClick={() => handleDeleteCourse(course.id)} className="text-gray-500 hover:text-red-400" title="ลบรายวิชา">🗑️</button>
                         </div>
                       ))}
                     </div>

@@ -11,7 +11,38 @@ export const isSupabaseConfigured = () => {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ==========================================
 // Types
+// ==========================================
+export interface UserProfile {
+  id?: string;
+  email: string;
+  name: string;
+  userId: string;
+  role: 'teacher' | 'student' | 'admin';
+  major?: string;
+  created_at?: string;
+}
+
+export interface TeacherCourse {
+  id: string;
+  code: string;
+  name: string;
+  teacherId?: string;
+  created_at?: string;
+}
+
+export interface StudentSchedule {
+  id: string;
+  studentId: string;
+  code: string;
+  name: string;
+  day: string;
+  time?: string;
+  location?: string;
+  created_at?: string;
+}
+
 export interface RoomSettings {
   courseCode: string;
   name: string;
@@ -68,7 +99,217 @@ export interface HistoryRecord {
   created_at?: string;
 }
 
+// ==========================================
+// User & Profile Management
+// ==========================================
+export async function getUserByEmail(email: string): Promise<UserProfile | null> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.trim().toLowerCase())
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      userId: data.user_id,
+      role: data.role,
+      major: data.major,
+      created_at: data.created_at,
+    };
+  } catch (err) {
+    console.warn('Error fetching user from Supabase, checking local cache:', err);
+    return null;
+  }
+}
+
+export async function upsertUser(user: UserProfile): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('users').upsert({
+      id: user.email.trim().toLowerCase(),
+      email: user.email.trim().toLowerCase(),
+      name: user.name,
+      user_id: user.userId,
+      role: user.role,
+      major: user.major || 'วิศวกรรมคอมพิวเตอร์',
+    });
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.warn('Error upserting user to Supabase:', err);
+    return false;
+  }
+}
+
+export async function getAllUsers(): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(row => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      userId: row.user_id,
+      role: row.role,
+      major: row.major,
+      created_at: row.created_at,
+    }));
+  } catch (err) {
+    console.warn('Error fetching all users from Supabase:', err);
+    return [];
+  }
+}
+
+// ==========================================
+// Course Management (Teacher)
+// ==========================================
+export async function getCoursesByTeacher(teacherId: string): Promise<TeacherCourse[]> {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('teacher_id', teacherId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      return data.map(r => ({
+        id: r.id,
+        code: r.code,
+        name: r.name,
+        teacherId: r.teacher_id,
+        created_at: r.created_at,
+      }));
+    }
+    return [];
+  } catch (err) {
+    console.warn('Error fetching courses from Supabase:', err);
+    return [];
+  }
+}
+
+export async function addCourse(course: { code: string; name: string; teacherId: string }): Promise<TeacherCourse | null> {
+  try {
+    const { data, error } = await supabase.from('courses').insert({
+      code: course.code,
+      name: course.name,
+      teacher_id: course.teacherId,
+    }).select().single();
+
+    if (error) throw error;
+    return {
+      id: data.id,
+      code: data.code,
+      name: data.name,
+      teacherId: data.teacher_id,
+      created_at: data.created_at,
+    };
+  } catch (err) {
+    console.warn('Error adding course to Supabase:', err);
+    return null;
+  }
+}
+
+export async function deleteCourse(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('courses').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.warn('Error deleting course from Supabase:', err);
+    return false;
+  }
+}
+
+// ==========================================
+// Schedules Management (Student)
+// ==========================================
+export async function getSchedulesByStudent(studentId: string): Promise<StudentSchedule[]> {
+  try {
+    const { data, error } = await supabase
+      .from('schedules')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      return data.map(r => ({
+        id: r.id,
+        studentId: r.student_id,
+        code: r.code,
+        name: r.name,
+        day: r.day,
+        time: r.time,
+        location: r.location,
+        created_at: r.created_at,
+      }));
+    }
+    return [];
+  } catch (err) {
+    console.warn('Error fetching schedules from Supabase:', err);
+    return [];
+  }
+}
+
+export async function addSchedule(item: {
+  studentId: string;
+  code: string;
+  name: string;
+  day: string;
+  time?: string;
+  location?: string;
+}): Promise<StudentSchedule | null> {
+  try {
+    const { data, error } = await supabase.from('schedules').insert({
+      student_id: item.studentId,
+      code: item.code,
+      name: item.name,
+      day: item.day,
+      time: item.time,
+      location: item.location,
+    }).select().single();
+
+    if (error) throw error;
+    return {
+      id: data.id,
+      studentId: data.student_id,
+      code: data.code,
+      name: data.name,
+      day: data.day,
+      time: data.time,
+      location: data.location,
+      created_at: data.created_at,
+    };
+  } catch (err) {
+    console.warn('Error adding schedule to Supabase:', err);
+    return null;
+  }
+}
+
+export async function deleteSchedule(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('schedules').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.warn('Error deleting schedule from Supabase:', err);
+    return false;
+  }
+}
+
+// ==========================================
 // Helpers for Room Management
+// ==========================================
 export async function getActiveRooms(): Promise<RoomRecord[]> {
   try {
     const { data, error } = await supabase
@@ -174,7 +415,9 @@ export async function deleteRoom(roomCode: string): Promise<boolean> {
   }
 }
 
+// ==========================================
 // Helpers for History
+// ==========================================
 export async function getAllHistory(): Promise<HistoryRecord[]> {
   try {
     const { data, error } = await supabase
@@ -241,7 +484,9 @@ export async function deleteHistory(id: string): Promise<boolean> {
   }
 }
 
+// ==========================================
 // Realtime Subscriptions
+// ==========================================
 export function subscribeToRoom(
   roomCode: string,
   onUpdate: (room: RoomRecord) => void,
