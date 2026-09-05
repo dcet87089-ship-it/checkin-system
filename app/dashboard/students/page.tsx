@@ -44,6 +44,19 @@ interface ScheduleItemType {
   location: string;
 }
 
+function calculateDistance(lat1?: number, lon1?: number, lat2?: number, lon2?: number) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 0;
+  if (lat1 === 0 && lon1 === 0 && lat2 === 0 && lon2 === 0) return 0;
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState<'home' | 'schedule' | 'history'>('history');
@@ -121,19 +134,36 @@ export default function StudentDashboard() {
     }
   }, [router]);
 
-  // Heartbeat อัปเดตสถานะของนักศึกษาไปยัง Supabase ทุก 10 วินาที
+  // Heartbeat อัปเดตสถานะและพิกัด GPS ของนักศึกษาไปยัง Supabase ทุก 10 วินาที
   useEffect(() => {
     if (joinedClass && userData) {
       const interval = setInterval(async () => {
         const currentTime = new Date().toISOString();
+        const distMeters = (teacherLocation.lat !== 0 && myLocation.lat !== 0)
+          ? Math.round(calculateDistance(myLocation.lat, myLocation.lng, teacherLocation.lat, teacherLocation.lng))
+          : undefined;
+
+        let curStatus = "เข้าเรียน";
+        if (distMeters !== undefined) {
+          if (distMeters > 100) curStatus = "ไกลเกินพิกัด";
+          else if (distMeters > 50) curStatus = "เฝ้าระวัง";
+        }
+
         const updatedStudents = currentStudents.map((s: StudentData) => 
-          s.studentId === userData.userId ? { ...s, lastSeen: currentTime } : s
+          s.studentId === userData.userId ? { 
+            ...s, 
+            lat: myLocation.lat || s.lat,
+            lng: myLocation.lng || s.lng,
+            distance: distMeters !== undefined ? distMeters : s.distance,
+            status: curStatus,
+            lastSeen: currentTime 
+          } : s
         );
         await updateRoom(joinedClass.code, { students: updatedStudents });
       }, 10000);
       return () => clearInterval(interval);
     }
-  }, [joinedClass, userData, currentStudents]);
+  }, [joinedClass, userData, currentStudents, myLocation, teacherLocation]);
 
   // Realtime listener สำหรับห้องเรียนที่เข้าร่วม
   useEffect(() => {
@@ -207,27 +237,68 @@ export default function StudentDashboard() {
     }
   }, [activeMenu, userData]);
 
-  const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
-    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 0;
-    if (lat1 === 0 && lon1 === 0 && lat2 === 0 && lon2 === 0) return 0;
-    const R = 6371e3;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'requesting' | 'ready' | 'denied'>('idle');
+
+  const requestStudentGPS = (): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined" || !navigator.geolocation) {
+        alert("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับระบบ GPS");
+        setGpsStatus('denied');
+        resolve(null);
+        return;
+      }
+      setGpsStatus('requesting');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setMyLocation(loc);
+          setGpsStatus('ready');
+          resolve(loc);
+        },
+        (err) => {
+          console.warn("GPS error:", err.message);
+          setGpsStatus('denied');
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
   };
 
-  const joinRoom = async (courseCode: string) => {
+  const joinRoom = async (courseCode: string, forcedLoc?: { lat: number; lng: number }) => {
     if (!userData) return;
+
+    // ตรวจสอบและถาม GPS ทุกครั้งก่อนเข้าห้องเรียน
+    let curLoc = forcedLoc || myLocation;
+    if (!curLoc || curLoc.lat === 0) {
+      const loc = await requestStudentGPS();
+      if (!loc || loc.lat === 0) {
+        alert("⚠️ ต้องอนุญาตการเข้าถึงตำแหน่ง GPS บนอุปกรณ์ของท่านก่อนเข้าเรียน เพื่อยืนยันระยะห่างจากอาจารย์ (กรุณากด 'อนุญาต / Allow' ในเบราว์เซอร์)");
+        return;
+      }
+      curLoc = loc;
+    }
+
     setIsScanning(false);
     setJoinCodeInput(""); 
 
     const room = await getRoom(courseCode);
 
     if (room) {
+      const teacherLoc = room.teacher_location || room.teacherLocation || { lat: 0, lng: 0 };
+      setTeacherLocation(teacherLoc);
+
+      let distMeters = 0;
+      let checkStatus = "เข้าเรียน";
+      if (teacherLoc.lat !== 0 && curLoc.lat !== 0) {
+        distMeters = Math.round(calculateDistance(curLoc.lat, curLoc.lng, teacherLoc.lat, teacherLoc.lng));
+        if (distMeters > 100) {
+          checkStatus = "ไกลเกินพิกัด";
+        } else if (distMeters > 50) {
+          checkStatus = "เฝ้าระวัง";
+        }
+      }
+
       setJoinedClass({ code: courseCode, name: room.settings?.name || "กำลังเข้าเรียน..." });
       
       const newStudent: StudentData = {
@@ -235,9 +306,10 @@ export default function StudentDashboard() {
         studentId: userData.userId, 
         name: userData.name,        
         major: "วิศวกรรมคอมพิวเตอร์", 
-        status: "เข้าเรียน",
-        lat: myLocation.lat,
-        lng: myLocation.lng,
+        status: checkStatus,
+        lat: curLoc.lat,
+        lng: curLoc.lng,
+        distance: distMeters,
         joinTime: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
         lastSeen: new Date().toISOString()
       };
@@ -252,20 +324,50 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleScanSuccess = (text: string) => {
+  const handleScanSuccess = async (text: string) => {
     if (text.includes("CheckIn-")) {
       const courseCode = text.replace("CheckIn-", "");
-      joinRoom(courseCode);
+      let curLoc = myLocation;
+      if (!curLoc || curLoc.lat === 0) {
+        const loc = await requestStudentGPS();
+        if (!loc || loc.lat === 0) {
+          alert("⚠️ กรุณาอนุญาตตำแหน่ง GPS ของอุปกรณ์ก่อนเพื่อสแกนเข้าเรียน");
+          return;
+        }
+        curLoc = loc;
+      }
+      joinRoom(courseCode, curLoc);
     } else {
       alert("QR Code ไม่ถูกต้อง");
     }
+  };
+
+  const handleStartScan = async () => {
+    let curLoc = myLocation;
+    if (!curLoc || curLoc.lat === 0) {
+      const loc = await requestStudentGPS();
+      if (!loc || loc.lat === 0) {
+        alert("⚠️ จำเป็นต้องเปิดและอนุญาตพิกัด GPS ก่อนเริ่มสแกน QR Code");
+        return;
+      }
+    }
+    setIsScanning(true);
   };
 
   const handleJoinWithCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!joinCodeInput) return;
     try {
-      await joinRoom(joinCodeInput.trim());
+      let curLoc = myLocation;
+      if (!curLoc || curLoc.lat === 0) {
+        const loc = await requestStudentGPS();
+        if (!loc || loc.lat === 0) {
+          alert("⚠️ กรุณาอนุญาตตำแหน่ง GPS ของอุปกรณ์ก่อนจึงจะเข้าร่วมห้องได้");
+          return;
+        }
+        curLoc = loc;
+      }
+      await joinRoom(joinCodeInput.trim(), curLoc);
     } catch (error) {
       alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
     }
@@ -462,8 +564,36 @@ export default function StudentDashboard() {
             
             {!joinedClass ? (
               <div className="bg-[#151822] border border-gray-800 p-10 rounded-2xl max-w-2xl mx-auto shadow-sm">
-                <p className="text-gray-400 mb-8 text-center font-medium">เลือกวิธีเข้าเรียน (ระบบจะจับระยะห่าง GPS)</p>
+                <p className="text-gray-400 mb-6 text-center font-medium">เลือกวิธีเข้าเรียน (ระบบจะจับระยะห่าง GPS)</p>
                 
+                {/* กล่องแสดงสถานะ GPS ของนักศึกษา */}
+                <div className="bg-[#0d1017] border border-gray-800 rounded-2xl p-4 mb-6 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-300 flex items-center gap-2">
+                      📍 พิกัด GPS เครื่องของคุณ:
+                    </span>
+                    {myLocation.lat !== 0 ? (
+                      <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        พร้อม ({myLocation.lat.toFixed(4)}, {myLocation.lng.toFixed(4)})
+                      </span>
+                    ) : (
+                      <span className="text-amber-400 font-bold text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
+                        {gpsStatus === 'requesting' ? 'กำลังขอพิกัด...' : 'ยังไม่ได้เชื่อมต่อ GPS'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => requestStudentGPS()}
+                      className="text-xs text-[#00b87c] hover:underline font-bold"
+                    >
+                      {myLocation.lat !== 0 ? '🔄 ตรวจจับพิกัดใหม่' : '👉 แตะเพื่ออนุญาตสิทธิ์ GPS'}
+                    </button>
+                  </div>
+                </div>
+
                 {isScanning ? (
                   <div className="max-w-sm mx-auto animate-fadeIn text-center">
                     <div className="overflow-hidden rounded-2xl border-2 border-[#00b87c] mb-6 p-1 bg-[#0d1017]">
@@ -474,8 +604,8 @@ export default function StudentDashboard() {
                     <button type="button" onClick={() => setIsScanning(false)} className="text-gray-400 hover:text-white underline text-sm">ยกเลิกการสแกน</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => setIsScanning(true)} className="w-full bg-[#00b87c] hover:bg-[#00a36e] text-white py-4 rounded-xl font-bold text-lg mb-8 transition-colors flex justify-center items-center gap-2">
-                    <span className="text-2xl">📸</span> สแกน QR Code
+                  <button type="button" onClick={handleStartScan} className="w-full bg-[#00b87c] hover:bg-[#00a36e] text-white py-4 rounded-xl font-bold text-lg mb-8 transition-colors flex justify-center items-center gap-2">
+                    <span className="text-2xl">📸</span> สแกน QR Code (ต้องเปิด GPS)
                   </button>
                 )}
 
@@ -540,13 +670,36 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="bg-[#0d1017] rounded-2xl p-10 text-center border border-gray-800 flex-1 flex flex-col justify-center items-center relative">
-                    <p className="text-gray-400 mb-4 font-medium">ระยะห่างจากห้องเรียน</p>
-                    <p className={`text-7xl font-black mb-6 ${distTextColor}`}>
+                    <p className="text-gray-400 mb-2 font-medium">ระยะห่างจากอาจารย์ในห้องเรียน</p>
+                    <p className={`text-7xl font-black mb-4 ${distTextColor}`}>
                       {dist.toFixed(0)} <span className="text-2xl text-gray-500 font-normal ml-1">ม.</span>
                     </p>
-                    <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold border ${statusColor}`}>
+                    <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold border ${statusColor} mb-6`}>
                       {statusMessage}
                     </div>
+
+                    <div className="w-full max-w-md bg-[#151822] border border-gray-800/80 rounded-xl p-4 text-xs space-y-2 text-left">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">📍 พิกัดของคุณ:</span>
+                        <span className="font-mono text-emerald-400 font-bold">
+                          {myLocation.lat ? `${myLocation.lat.toFixed(5)}, ${myLocation.lng.toFixed(5)}` : 'กำลังระบุพิกัด...'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">🏫 พิกัดห้องเรียนอาจารย์:</span>
+                        <span className="font-mono text-blue-400 font-bold">
+                          {teacherLocation.lat ? `${teacherLocation.lat.toFixed(5)}, ${teacherLocation.lng.toFixed(5)}` : 'ไม่มีข้อมูลพิกัด'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => requestStudentGPS()}
+                      className="mt-4 text-xs text-[#00b87c] hover:underline flex items-center gap-1 font-bold"
+                    >
+                      🔄 ตรวจสอบและรีเฟรชพิกัด GPS ปัจจุบัน
+                    </button>
                   </div>
                 </div>
                 

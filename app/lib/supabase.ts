@@ -64,6 +64,7 @@ export interface StudentData {
   status?: string;
   lat?: number;
   lng?: number;
+  distance?: number;
   joinTime?: string;
   lastSeen?: string;
 }

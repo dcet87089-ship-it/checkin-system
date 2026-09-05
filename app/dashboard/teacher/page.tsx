@@ -57,6 +57,33 @@ export default function TeacherDashboard() {
   const [selectedStatsCourse, setSelectedStatsCourse] = useState<string | null>(null);
   const [selectedSessionView, setSelectedSessionView] = useState<string>('all');
   const [configured, setConfigured] = useState(true);
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'requesting' | 'ready' | 'denied'>('idle');
+
+  const requestTeacherGPS = (): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        alert("อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับ GPS");
+        setGpsStatus('denied');
+        resolve(null);
+        return;
+      }
+      setGpsStatus('requesting');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setTeacherLocation(loc);
+          setGpsStatus('ready');
+          resolve(loc);
+        },
+        (err) => {
+          console.warn("GPS error:", err.message);
+          setGpsStatus('denied');
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  };
 
   const fetchMyHistory = useCallback(async (teacherName: string) => {
     if (!teacherName) return;
@@ -181,9 +208,15 @@ export default function TeacherDashboard() {
   const handleStartClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!setupCourse) return;
-    if (teacherLocation.lat === 0) {
-      alert("กำลังรอพิกัด GPS กรุณารอสักครู่หรืออนุญาตการเข้าถึงตำแหน่ง...");
-      return;
+    
+    let currentLoc = teacherLocation;
+    if (currentLoc.lat === 0) {
+      const loc = await requestTeacherGPS();
+      if (!loc || loc.lat === 0) {
+        alert("⚠️ ต้องอนุญาตการเข้าถึงตำแหน่ง GPS ของอาจารย์ก่อนเปิดห้องเรียน เพื่อใช้เป็นจุดอ้างอิงเทียบระยะห่างของนักศึกษา (กรุณากด 'อนุญาต / Allow' การเข้าถึงพิกัดในเบราว์เซอร์)");
+        return;
+      }
+      currentLoc = loc;
     }
 
     const newCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -528,8 +561,39 @@ export default function TeacherDashboard() {
                       <label className="text-sm font-bold text-gray-300 mb-2 block">ระยะเวลาคลาส (นาที)</label>
                       <input type="number" value={classDuration} onChange={(e) => setClassDuration(e.target.value)} placeholder="เช่น 60" className="w-full bg-[#1c2130] border border-[#2a3041] focus:border-blue-500 text-white rounded-xl px-4 py-3 focus:outline-none transition-all" required />
                     </div>
-                    <p className="text-red-400 text-xs mt-2">* มีระบบจำกัดสมาชิก และเปิดคลาสตามเวลาที่กำหนดเพื่อยุบห้องอัตโนมัติ</p>
-                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all mt-6">สร้างห้องเรียน</button>
+
+                    {/* กล่องสถานะ GPS ของอาจารย์ */}
+                    <div className="bg-[#11141c] border border-[#2a3041] rounded-2xl p-4 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-gray-300 flex items-center gap-2">
+                          📍 พิกัด GPS ห้องเรียน:
+                        </span>
+                        {teacherLocation.lat !== 0 ? (
+                          <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            พร้อมใช้งาน ({teacherLocation.lat.toFixed(4)}, {teacherLocation.lng.toFixed(4)})
+                          </span>
+                        ) : (
+                          <span className="text-amber-400 font-bold text-xs bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
+                            {gpsStatus === 'requesting' ? 'กำลังขอพิกัด...' : 'ยังไม่ได้เชื่อมพิกัด'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => requestTeacherGPS()}
+                          className="text-xs text-blue-400 hover:text-blue-300 font-bold underline"
+                        >
+                          {teacherLocation.lat !== 0 ? '🔄 ตรวจจับพิกัด GPS ใหม่อีกครั้ง' : '👉 กดเพื่ออนุญาตสิทธิ์และระบุพิกัด GPS'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-red-400 text-xs mt-2">* ต้องเปิดพิกัด GPS ของอาจารย์ก่อนเริ่มคลาส เพื่อใช้เปรียบเทียบระยะห่างของนักศึกษา</p>
+                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all mt-6">
+                      สร้างห้องเรียน (เปิดคลาส)
+                    </button>
                   </form>
                 </div>
               </div>
@@ -542,7 +606,12 @@ export default function TeacherDashboard() {
                     <h2 className="text-3xl font-bold text-white flex items-center gap-3">
                       <span className="w-4 h-4 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> ห้องเรียน Live: {setupCourse.code}
                     </h2>
-                    <p className="text-gray-400 mt-2">{setupCourse.name} | หมู่เรียน 1 | สอนครั้งที่ {autoSessionNum}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <p className="text-gray-400">{setupCourse.name} | หมู่เรียน 1 | สอนครั้งที่ {autoSessionNum}</p>
+                      <span className="text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-full">
+                        📍 พิกัดห้องเรียน: {teacherLocation.lat.toFixed(5)}, {teacherLocation.lng.toFixed(5)}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="bg-[#1c2130] border border-[#2a3041] px-6 py-2 rounded-xl text-center">
