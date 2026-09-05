@@ -1,12 +1,24 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeCanvas } from 'qrcode.react'; 
 
-// === นำเข้า Firebase ===
-import { db, auth } from '../../lib/firebase';
-import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, updateDoc, query, orderBy } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+// === นำเข้า Supabase ===
+import { 
+  createRoom, 
+  updateRoom, 
+  deleteRoom, 
+  getRoom, 
+  getAllHistory, 
+  addHistory, 
+  deleteHistory, 
+  subscribeToRoom, 
+  subscribeToHistory,
+  isSupabaseConfigured,
+  HistoryRecord,
+  StudentData,
+  ChatMessage
+} from '../../lib/supabase';
 
 export default function TeacherDashboard() {
   const router = useRouter();
@@ -16,11 +28,11 @@ export default function TeacherDashboard() {
   const [activeMenu, setActiveMenu] = useState<'home' | 'add' | 'stats'>('home');
 
   const [savedCourses, setSavedCourses] = useState<any[]>([]);
-  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
 
   // State: ตั้งค่าห้องเรียน
   const [setupCourse, setSetupCourse] = useState<{code: string, name: string} | null>(null);
-  const [autoSessionNum, setAutoSessionNum] = useState<number>(1); // เก็บรอบอัตโนมัติ
+  const [autoSessionNum, setAutoSessionNum] = useState<number>(1);
   const [maxStudents, setMaxStudents] = useState("40");
   const [classDuration, setClassDuration] = useState("60");
 
@@ -32,8 +44,8 @@ export default function TeacherDashboard() {
   const [roomEndTime, setRoomEndTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
-  const [currentStudents, setCurrentStudents] = useState<any[]>([]);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [currentStudents, setCurrentStudents] = useState<StudentData[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [pinnedMessage, setPinnedMessage] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,13 +53,29 @@ export default function TeacherDashboard() {
   // State: หน้าสถิติ
   const [selectedStatsCourse, setSelectedStatsCourse] = useState<string | null>(null);
   const [selectedSessionView, setSelectedSessionView] = useState<string>('all');
+  const [configured, setConfigured] = useState(true);
+
+  const fetchMyHistory = useCallback(async (teacherName: string) => {
+    if (!teacherName) return;
+    try {
+      const records = await getAllHistory();
+      const myRecords = records.filter(r => r.teacherName === teacherName);
+      setHistoryRecords(myRecords);
+    } catch (err) {
+      console.error("Error loading history:", err);
+    }
+  }, []);
 
   useEffect(() => {
+    setConfigured(isSupabaseConfigured());
     const storedData = localStorage.getItem('teacher_data');
+    let teacherUser: any = null;
     if (storedData) {
-      setUserData(JSON.parse(storedData));
+      teacherUser = JSON.parse(storedData);
+      setUserData(teacherUser);
     } else {
-      setUserData({ name: "อาจารย์ทดสอบ", role: "teacher" }); 
+      teacherUser = { name: "อาจารย์ทดสอบ", role: "teacher" };
+      setUserData(teacherUser);
     }
     
     const loadedCourses = JSON.parse(localStorage.getItem('teacher_saved_courses') || "[]");
@@ -57,36 +85,53 @@ export default function TeacherDashboard() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setTeacherLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => console.log("กำลังหาพิกัด GPS..."),
+        (err) => console.log("กำลังหาพิกัด GPS...", err),
         { enableHighAccuracy: true }
       );
     }
-  }, []);
 
-  // === ดักฟังประวัติการสอนแบบ Real-time (เพื่อใช้นับรอบและแสดงในตารางสถิติ) ===
-  useEffect(() => {
-    if (userData) {
-      const q = query(collection(db, "history"), orderBy("timestamp", "asc"));
-      const unsubscribe = onSnapshot(q, (snap) => {
-        const myRecords = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter((r: any) => r.teacherName === userData.name);
-        setHistoryRecords(myRecords);
-      });
-      return () => unsubscribe();
+    if (teacherUser?.name) {
+      fetchMyHistory(teacherUser.name);
     }
-  }, [userData]);
 
-  // === ดักฟังข้อมูลห้องเรียนแบบ Live ===
+    const unsubscribeHistory = subscribeToHistory(() => {
+      if (teacherUser?.name) {
+        fetchMyHistory(teacherUser.name);
+      }
+    });
+
+    return () => {
+      unsubscribeHistory();
+    };
+  }, [fetchMyHistory]);
+
+  // === ดักฟังข้อมูลห้องเรียนแบบ Live ผ่าน Supabase Realtime ===
   useEffect(() => {
     if (isRoomActive && roomCode) {
-      const roomRef = doc(db, "rooms", roomCode);
-      const unsubscribe = onSnapshot(roomRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const roomData = docSnap.data();
-          setCurrentStudents(roomData.students || []);
-          setChatMessages(roomData.chat || []);
-          setPinnedMessage(roomData.settings?.pinnedMessage || null);
+      // ดึงสถานะปัจจุบันครั้งแรก
+      getRoom(roomCode).then((room) => {
+        if (room) {
+          setCurrentStudents(room.students || []);
+          setChatMessages(room.chat || []);
+          setPinnedMessage(room.settings?.pinnedMessage || null);
         }
       });
+
+      // สมัครรับการอัปเดตแบบ Realtime
+      const unsubscribe = subscribeToRoom(
+        roomCode,
+        (room) => {
+          setCurrentStudents(room.students || []);
+          setChatMessages(room.chat || []);
+          setPinnedMessage(room.settings?.pinnedMessage || null);
+        },
+        () => {
+          alert("ห้องเรียนถูกปิดแล้ว");
+          setIsRoomActive(false);
+          setRoomCode(null);
+        }
+      );
+
       return () => unsubscribe();
     }
   }, [isRoomActive, roomCode]);
@@ -111,10 +156,8 @@ export default function TeacherDashboard() {
   // === ฟังก์ชันเลือกวิชาเพื่อเปิดสอน (คำนวณรอบอัตโนมัติ) ===
   const handleSelectCourseToOpen = (course: any) => {
     setSetupCourse(course);
-    // หาประวัติทั้งหมดของวิชานี้ที่เคยสอนไปแล้ว
     const pastSessions = historyRecords.filter(r => r.courseCode === course.code);
-    // หารอบที่มากที่สุด แล้ว +1
-    const maxNum = pastSessions.reduce((max, r) => Math.max(max, parseInt(r.sessionNum || 0)), 0);
+    const maxNum = pastSessions.reduce((max, r) => Math.max(max, parseInt(r.sessionNum || "0")), 0);
     setAutoSessionNum(maxNum + 1);
   };
 
@@ -123,7 +166,7 @@ export default function TeacherDashboard() {
     e.preventDefault();
     if (!setupCourse) return;
     if (teacherLocation.lat === 0) {
-      alert("กำลังรอพิกัด GPS กรุณารอสักครู่...");
+      alert("กำลังรอพิกัด GPS กรุณารอสักครู่หรืออนุญาตการเข้าถึงตำแหน่ง...");
       return;
     }
 
@@ -133,7 +176,8 @@ export default function TeacherDashboard() {
     const startTimeStr = new Date().toISOString();
     
     try {
-      await setDoc(doc(db, "rooms", newCode), {
+      const success = await createRoom({
+        id: newCode,
         settings: {
           courseCode: setupCourse.code,
           name: setupCourse.name,
@@ -156,10 +200,14 @@ export default function TeacherDashboard() {
         }]
       });
 
-      setRoomCode(newCode);
-      setRoomEndTime(endTime);
-      setIsRoomActive(true);
-      setShowQRModal(true); 
+      if (success) {
+        setRoomCode(newCode);
+        setRoomEndTime(endTime);
+        setIsRoomActive(true);
+        setShowQRModal(true); 
+      } else {
+        alert("เกิดข้อผิดพลาดในการเปิดคลาส กรุณาตรวจสอบการเชื่อมต่อ Supabase");
+      }
     } catch (error) {
       console.error("Error creating room:", error);
       alert("เกิดข้อผิดพลาดในการเปิดคลาส");
@@ -184,11 +232,12 @@ export default function TeacherDashboard() {
         timestamp: new Date().toISOString(),
         dateStr: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }),
         studentsData: currentStudents,
-        sessionNum: autoSessionNum.toString()
+        sessionNum: autoSessionNum.toString(),
+        teacherLocation: teacherLocation,
       };
 
-      await addDoc(collection(db, "history"), historyData);
-      await deleteDoc(doc(db, "rooms", roomCode));
+      await addHistory(historyData);
+      await deleteRoom(roomCode);
 
       setRoomCode(null);
       setIsRoomActive(false);
@@ -197,18 +246,25 @@ export default function TeacherDashboard() {
       setChatMessages([]);
       setRoomEndTime(null);
       setShowQRModal(false);
+
+      if (userData?.name) {
+        fetchMyHistory(userData.name);
+      }
     } catch (error) {
       console.error("Error ending class:", error);
       alert("เกิดข้อผิดพลาดในการปิดคลาส");
     }
   };
 
-  // === ฟังก์ชันลบประวัติการสอน (กรณีเปิดพลาด) ===
+  // === ฟังก์ชันลบประวัติการสอน ===
   const handleDeleteHistory = async (recordId: string) => {
     if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบประวัติการสอนครั้งนี้?\n(การลบจะไม่สามารถกู้คืนได้ และเลขรอบจะถูกรีเซ็ตใหม่)")) {
       try {
-        await deleteDoc(doc(db, "history", recordId));
-        alert("ลบประวัติสำเร็จ ระบบจะปรับเลขรอบครั้งถัดไปให้อัตโนมัติ");
+        await deleteHistory(recordId);
+        alert("ลบประวัติสำเร็จ");
+        if (userData?.name) {
+          fetchMyHistory(userData.name);
+        }
       } catch (error) {
         console.error("Error deleting history:", error);
         alert("เกิดข้อผิดพลาดในการลบประวัติ");
@@ -220,8 +276,15 @@ export default function TeacherDashboard() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (chatInput.trim() === "" || !roomCode) return;
-    const newMsg = { sender: "อาจารย์", text: chatInput, time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), type: "text" };
-    await updateDoc(doc(db, "rooms", roomCode), { chat: [...chatMessages, newMsg] });
+    const newMsg: ChatMessage = { 
+      sender: "อาจารย์", 
+      text: chatInput, 
+      time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), 
+      type: "text" 
+    };
+    const updated = [...chatMessages, newMsg];
+    setChatMessages(updated);
+    await updateRoom(roomCode, { chat: updated });
     setChatInput("");
   };
 
@@ -230,22 +293,40 @@ export default function TeacherDashboard() {
     if (!file || !roomCode) return;
     const reader = new FileReader();
     reader.onloadend = async () => {
-      const newMsg = { sender: "อาจารย์", text: "ส่งรูปภาพ", imageUrl: reader.result, time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), type: "image" };
-      await updateDoc(doc(db, "rooms", roomCode), { chat: [...chatMessages, newMsg] });
+      const newMsg: ChatMessage = { 
+        sender: "อาจารย์", 
+        text: "ส่งรูปภาพ", 
+        imageUrl: reader.result as string, 
+        time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), 
+        type: "image" 
+      };
+      const updated = [...chatMessages, newMsg];
+      setChatMessages(updated);
+      await updateRoom(roomCode, { chat: updated });
     };
     reader.readAsDataURL(file);
   };
 
   const handlePinMessage = async (text: string) => {
-    if(!roomCode) return;
-    await updateDoc(doc(db, "rooms", roomCode), { "settings.pinnedMessage": text });
+    if (!roomCode || !setupCourse) return;
+    setPinnedMessage(text || null);
+    await updateRoom(roomCode, {
+      settings: {
+        courseCode: setupCourse.code,
+        name: setupCourse.name,
+        joinCode: roomCode,
+        teacherName: userData?.name || "อาจารย์",
+        sessionNum: autoSessionNum.toString(),
+        pinnedMessage: text || null,
+      }
+    });
   };
 
   const handleKickStudent = async (studentId: string) => {
     if (!roomCode) return;
-    const roomRef = doc(db, "rooms", roomCode);
     const updatedStudents = currentStudents.filter(s => s.studentId !== studentId);
-    await updateDoc(roomRef, { students: updatedStudents });
+    setCurrentStudents(updatedStudents);
+    await updateRoom(roomCode, { students: updatedStudents });
   };
 
   const handleSaveCourse = (e: React.FormEvent<HTMLFormElement>) => {
@@ -253,7 +334,7 @@ export default function TeacherDashboard() {
     const form = e.currentTarget;
     const code = (form.elements.namedItem("newCourseCode") as HTMLInputElement).value;
     const name = (form.elements.namedItem("newCourseName") as HTMLInputElement).value;
-    if(code && name) {
+    if (code && name) {
       const newCourse = { id: Date.now(), code, name };
       const updatedCourses = [...savedCourses, newCourse];
       setSavedCourses(updatedCourses);
@@ -262,8 +343,7 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const handleLogout = () => {
     localStorage.clear();
     router.push('/');
   };
@@ -308,7 +388,7 @@ export default function TeacherDashboard() {
         }
       });
     });
-    const allStudents = Array.from(stdMap.values()).sort((a, b) => a.id.localeCompare(b.id));
+    const allStudents = Array.from(stdMap.values()).sort((a: any, b: any) => a.id.localeCompare(b.id));
     return { sessions: courseRecords, students: allStudents };
   };
 
@@ -345,6 +425,7 @@ export default function TeacherDashboard() {
       <div className="w-64 bg-[#161a26] flex flex-col border-r border-[#232938] z-10 shadow-xl">
         <div className="p-6 border-b border-[#232938]">
           <h1 className="text-xl font-bold text-blue-400">เมนูการจัดการ</h1>
+          <p className="text-xs text-gray-400 mt-1">{userData?.name || "อาจารย์"}</p>
         </div>
         <div className="flex-1 p-4 space-y-2">
           <button onClick={() => { setActiveMenu('home'); setSelectedStatsCourse(null); }} className={`w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 transition-all ${activeMenu === 'home' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:bg-[#202636] hover:text-white'}`}>
@@ -365,7 +446,12 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        
+        {!configured && (
+          <div className="bg-amber-500/20 border-b border-amber-500/40 p-3 px-6 text-amber-300 text-xs flex justify-between items-center">
+            <span>⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ใส่ Supabase URL หรือ Anon Key ใน <code>.env.local</code> หากต้องการให้ข้อมูลบันทึกถาวรโปรดระบุ Key</span>
+          </div>
+        )}
+
         {/* ========================================================= */}
         {/* เมนู 1: หน้าแรก (Live Room) */}
         {/* ========================================================= */}
@@ -400,8 +486,6 @@ export default function TeacherDashboard() {
                     <p className="text-gray-300 mt-1 text-lg">{setupCourse.name}</p>
                   </div>
                   <form onSubmit={handleStartClass} className="space-y-5">
-                    
-                    {/* เปลี่ยนเป็นโชว์เลขคำนวณอัตโนมัติ ไม่ให้กดเลือก */}
                     <div>
                       <label className="text-sm font-bold text-gray-300 mb-2 block">สอนครั้งที่ ...</label>
                       <div className="w-full bg-[#11141c] border border-[#2a3041] text-blue-400 font-bold rounded-xl px-4 py-4 flex items-center justify-between">
@@ -557,7 +641,7 @@ export default function TeacherDashboard() {
         )}
 
         {/* ========================================================= */}
-        {/* เมนู 3: สถิติการเข้าเรียน (มีปุ่มลบประวัติ) */}
+        {/* เมนู 3: สถิติการเข้าเรียน */}
         {/* ========================================================= */}
         {activeMenu === 'stats' && (
           <div className="flex-1 p-8 overflow-y-auto animate-fadeIn">
@@ -613,7 +697,6 @@ export default function TeacherDashboard() {
                             <th key={rec.id} className="pb-4 font-semibold text-center group">
                               <div className="flex flex-col items-center">
                                 ครั้งที่ {rec.sessionNum}
-                                {/* ปุ่มลบประวัติเฉพาะรอบ โผล่ขึ้นมาข้างใต้ */}
                                 <button onClick={() => handleDeleteHistory(rec.id)} className="mt-1 text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="ลบประวัตินี้ทิ้ง">ลบห้องนี้</button>
                               </div>
                             </th>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Scanner } from '@yudiel/react-qr-scanner';
 
 // === 1. นำเข้า Firebase ===
-import { db, auth } from '../../lib/firebase';
+import { db, auth } from '../../lib/supabase';
 import { doc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 

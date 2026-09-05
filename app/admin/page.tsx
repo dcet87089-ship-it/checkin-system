@@ -1,52 +1,56 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-// === นำเข้า Firebase ===
-import { db, auth } from '../lib/firebase'; // Path ถอย 1 ขั้น เพราะไฟล์อยู่ app/admin/page.tsx
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import { 
+  getActiveRooms, 
+  getAllHistory, 
+  subscribeToHistory, 
+  isSupabaseConfigured,
+  RoomRecord,
+  HistoryRecord
+} from '../lib/supabase';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   
   // State เก็บข้อมูลสถิติ
-  const [activeRooms, setActiveRooms] = useState<any[]>([]);
-  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
+  const [activeRooms, setActiveRooms] = useState<RoomRecord[]>([]);
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
+  const [configured, setConfigured] = useState(true);
+
+  const fetchAdminData = async () => {
+    try {
+      const [roomsData, historyData] = await Promise.all([
+        getActiveRooms(),
+        getAllHistory(),
+      ]);
+      setActiveRooms(roomsData);
+      setHistoryRecords(historyData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // ฟังก์ชันดึงข้อมูลจาก Firebase
-    const fetchAdminData = async () => {
-      try {
-        // 1. ดึงข้อมูลห้องเรียนที่กำลังเปิดอยู่
-        const roomsSnap = await getDocs(collection(db, "rooms"));
-        const roomsData = roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setActiveRooms(roomsData);
-
-        // 2. ดึงประวัติการเรียนทั้งหมด
-        const historyQuery = query(collection(db, "history"), orderBy("timestamp", "desc"));
-        const historySnap = await getDocs(historyQuery);
-        const historyData = historySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setHistoryRecords(historyData);
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    setConfigured(isSupabaseConfigured());
     fetchAdminData();
+
+    // ฟังการเปลี่ยนแปลงประวัติแบบ Realtime
+    const unsubscribeHistory = subscribeToHistory(() => {
+      fetchAdminData();
+    });
+
+    return () => {
+      unsubscribeHistory();
+    };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/');
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/');
   };
 
   if (loading) return <div className="min-h-screen bg-[#0b0f19] text-emerald-400 flex items-center justify-center font-bold text-xl">กำลังโหลดระบบหลังบ้าน...</div>;
@@ -77,9 +81,15 @@ export default function AdminDashboard() {
 
       {/* พื้นที่เนื้อหาหลัก (Main Content) */}
       <div className="flex-1 p-10 overflow-y-auto">
+        {!configured && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between">
+            <span>⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code> (โปรดระบุค่าเพื่อเชื่อมต่อฐานข้อมูล)</span>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-10">
           <h2 className="text-3xl font-bold text-white">ภาพรวมระบบ (Dashboard)</h2>
-          <button onClick={() => window.location.reload()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
+          <button onClick={() => fetchAdminData()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
             🔄 รีเฟรชข้อมูล
           </button>
         </div>
@@ -100,9 +110,9 @@ export default function AdminDashboard() {
 
           <div className="bg-[#151923] border border-[#1e2233] p-8 rounded-3xl shadow-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
-            <p className="text-gray-400 text-sm font-medium mb-2">สถานะเซิร์ฟเวอร์ (Firebase)</p>
+            <p className="text-gray-400 text-sm font-medium mb-2">สถานะเซิร์ฟเวอร์ (Supabase)</p>
             <p className="text-3xl font-bold text-emerald-400 mt-2 flex items-center gap-2">
-              <span className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse"></span> ปกติ
+              <span className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse"></span> {configured ? "เชื่อมต่อแล้ว" : "รอตั้งค่า Key"}
             </p>
           </div>
         </div>
