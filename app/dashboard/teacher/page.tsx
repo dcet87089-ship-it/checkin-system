@@ -599,7 +599,7 @@ export default function TeacherDashboard() {
           </button>
         </div>
         <div className="p-4 border-t border-[#232938]">
-          <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-gray-500 hover:text-red-400 transition-colors text-sm font-medium flex items-center gap-2">
+          <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-gray-300 hover:text-red-400 transition-colors text-sm font-medium flex items-center gap-2">
             <span>🚪</span> ออกจากระบบ
           </button>
         </div>
@@ -663,7 +663,7 @@ export default function TeacherDashboard() {
                  <h2 className="text-3xl font-bold text-white mb-8">รายวิชาของคุณ</h2>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {savedCourses.length === 0 ? (
-                      <div className="col-span-3 text-center p-10 bg-[#161a26] border border-[#232938] rounded-3xl text-gray-500">คุณยังไม่มีรายวิชา กรุณาไปที่เมนู "เพิ่มรายวิชา" ก่อน</div>
+                      <div className="col-span-3 text-center p-10 bg-[#161a26] border border-[#232938] rounded-3xl text-gray-300">คุณยังไม่มีรายวิชา กรุณาไปที่เมนู "เพิ่มรายวิชา" ก่อน</div>
                     ) : (
                       savedCourses.map(course => (
                         <div key={course.id} className="bg-[#161a26] p-6 rounded-3xl border border-[#232938] hover:border-blue-500 transition-all cursor-pointer shadow-lg hover:-translate-y-1" onClick={() => handleSelectCourseToOpen(course)}>
@@ -866,7 +866,7 @@ export default function TeacherDashboard() {
                         </thead>
                         <tbody className="divide-y divide-[#232938]">
                           {currentStudents.length === 0 ? (
-                            <tr><td colSpan={6} className="p-10 text-center text-gray-500">ยังไม่มีนักศึกษาสแกนเข้าเรียนในขณะนี้...</td></tr>
+                            <tr><td colSpan={6} className="p-10 text-center text-gray-300">ยังไม่มีนักศึกษาสแกนเข้าเรียนในขณะนี้...</td></tr>
                           ) : (
                             currentStudents.map((student) => {
                               const isEjectedOrGpsOff = student.gpsActive === false || student.status?.includes("ปิด GPS") || (!student.lat && !student.lng);
@@ -932,7 +932,7 @@ export default function TeacherDashboard() {
                                     </div>
                                   </td>
                                   <td className="p-4 text-center">
-                                    <button onClick={() => handleKickStudent(student.studentId)} className="text-gray-500 hover:text-red-400 px-3 py-1 rounded-lg border border-[#2a3041] hover:border-red-500/30 text-xs">นำออก</button>
+                                    <button onClick={() => handleKickStudent(student.studentId)} className="text-gray-300 hover:text-red-400 px-3 py-1 rounded-lg border border-[#2a3041] hover:border-red-500/30 text-xs">นำออก</button>
                                   </td>
                                 </tr>
                               );
@@ -968,12 +968,12 @@ export default function TeacherDashboard() {
               <div className="lg:col-span-2">
                 <div className="bg-[#161a26] rounded-3xl border border-[#232938] shadow-xl h-full p-6">
                   <h3 className="text-xl font-bold text-white mb-6">รายวิชาที่คุณสอนประจำ</h3>
-                  {savedCourses.length === 0 ? <p className="text-gray-500 text-center">ยังไม่มีรายวิชาที่บันทึกไว้</p> : (
+                  {savedCourses.length === 0 ? <p className="text-gray-300 text-center">ยังไม่มีรายวิชาที่บันทึกไว้</p> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {savedCourses.map((course: any) => (
                         <div key={course.id} className="bg-[#1c2130] p-4 rounded-2xl border border-[#2a3041] flex justify-between items-center group">
                           <div><p className="font-bold text-blue-400">{course.code}</p><p className="text-sm text-white mt-1">{course.name}</p></div>
-                          <button onClick={() => handleDeleteCourse(course.id)} className="text-gray-500 hover:text-red-400" title="ลบรายวิชา">🗑️</button>
+                          <button onClick={() => handleDeleteCourse(course.id)} className="text-gray-300 hover:text-red-400" title="ลบรายวิชา">🗑️</button>
                         </div>
                       ))}
                     </div>
@@ -994,7 +994,7 @@ export default function TeacherDashboard() {
             {!selectedStatsCourse ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {getGroupedCourses().length === 0 ? (
-                  <div className="col-span-3 text-center p-10 bg-[#161a26] border border-[#232938] rounded-3xl text-gray-500">ยังไม่มีประวัติการเปิดสอนวิชาใดๆ</div>
+                  <div className="col-span-3 text-center p-10 bg-[#161a26] border border-[#232938] rounded-3xl text-gray-300">ยังไม่มีประวัติการเปิดสอนวิชาใดๆ</div>
                 ) : (
                   getGroupedCourses().map((courseObj: any) => (
                     <div 
@@ -1006,7 +1006,7 @@ export default function TeacherDashboard() {
                       <h3 className="font-bold text-xl text-white">{courseObj.code}</h3>
                       <p className="text-sm text-gray-400 mt-1">{courseObj.name}</p>
                       <div className="mt-6 border-t border-[#232938] pt-4 flex justify-between items-center text-sm">
-                        <span className="text-gray-500">เปิดคลาสทั้งหมด</span><span className="font-bold text-blue-400">{courseObj.records.length} ครั้ง</span>
+                        <span className="text-gray-300">เปิดคลาสทั้งหมด</span><span className="font-bold text-blue-400">{courseObj.records.length} ครั้ง</span>
                       </div>
                     </div>
                   ))
@@ -1117,7 +1117,7 @@ export default function TeacherDashboard() {
                             return (
                               <tr key={std.id} className="hover:bg-[#1c2130]">
                                 <td className="py-4 font-mono text-gray-300">{std.id}</td><td className="py-4 font-bold text-white">{std.name}</td><td className="py-4 text-center text-blue-300 font-mono">{attendedRecord.joinTime}</td>
-                                <td className="py-4 text-center font-bold text-white">{minsInClass} <span className="font-normal text-gray-500 text-xs">นาที</span></td><td className="py-4 text-center"><span className={`px-3 py-1 border rounded-lg text-xs font-bold ${colorText}`}>{label}</span></td>
+                                <td className="py-4 text-center font-bold text-white">{minsInClass} <span className="font-normal text-gray-300 text-xs">นาที</span></td><td className="py-4 text-center"><span className={`px-3 py-1 border rounded-lg text-xs font-bold ${colorText}`}>{label}</span></td>
                               </tr>
                             );
                           });
