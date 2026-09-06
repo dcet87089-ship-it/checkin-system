@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Mail, Key, LogIn, Sparkles, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { getUserByEmail } from './lib/supabase';
 
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   
   const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [userPreview, setUserPreview] = useState<{ name: string; role: string } | null>(null);
@@ -47,11 +49,17 @@ export default function LoginPage() {
       const user = await getUserByEmail(trimmedEmail);
 
       if (!user) {
-        setErrorMessage('❌ ไม่พบอีเมลนี้ในฐานข้อมูล! เฉพาะผู้ที่ลงทะเบียนแล้วเท่านั้นจึงจะเข้าใช้งานได้');
-        setUserPreview(null);
-        setLoading(false);
-        return;
-      }
+          setErrorMessage('ไม่พบอีเมลนี้ในระบบ! โปรดตรวจสอบให้แน่ใจว่าลงทะเบียนแล้ว');
+          setUserPreview(null);
+          setLoading(false);
+          return;
+        }
+        
+        if (user.userId !== userId.trim()) {
+          setErrorMessage('รหัสประจำตัวไม่ถูกต้อง!');
+          setLoading(false);
+          return;
+        }
 
       // พบผู้ใช้ในฐานข้อมูลจริง -> บันทึกข้อมูลเซสชัน
       localStorage.setItem(`profile_${trimmedEmail}`, JSON.stringify(user));
@@ -75,12 +83,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-cosmic animate-gradient-bg relative overflow-hidden relative overflow-hidden">
       
       
-      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      {/*  Ultra Holographic Ambient Orbs */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
       <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
       
-      {/* 🌌 Animated Stars / Particles overlay */}
+      {/*  Animated Stars / Particles overlay */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
 {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -115,7 +123,7 @@ export default function LoginPage() {
           {/* กล่องแสดงผลเมื่อพบผู้ใช้ในระบบ */}
           {userPreview && (
             <div className="w-full mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center animate-fadeIn">
-              <p className="text-xs text-emerald-400 font-bold">✅ พบบัญชีในฐานข้อมูล</p>
+              <p className="text-xs text-emerald-400 font-bold"> พบบัญชีในฐานข้อมูล</p>
               <p className="text-white font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-lg mt-1">{userPreview.name}</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 สถานะ: <span className="text-[#00e5ff] font-bold">{userPreview.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}</span>
@@ -164,6 +172,30 @@ export default function LoginPage() {
               </div>
             </div>
 
+
+            {/* Input User ID */}
+            <div className="relative">
+              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">
+                รหัสประจำตัว (Student ID / Teacher ID / Admin ID)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Key className="w-5 h-5 text-gray-500" />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="กรอกรหัสประจำตัวของคุณ" 
+                  className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-12 pr-6 py-4 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 shadow-inner text-sm"
+                  value={userId}
+                  onChange={(e) => {
+                    setUserId(e.target.value);
+                    setErrorMessage('');
+                  }}
+                  required
+                />
+              </div>
+            </div>
+
             {/* Submit Button */}
             <button 
               type="submit" 
@@ -182,7 +214,7 @@ export default function LoginPage() {
                 href="/register" 
                 className="text-[#00e5ff] font-bold hover:underline transition-all inline-flex items-center gap-1 ml-1"
               >
-                สมัครสมาชิกใหม่ (Register) →
+                สมัครสมาชิกใหม่ (Register) 
               </Link>
             </p>
           </div>

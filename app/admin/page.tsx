@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, Pin, Smartphone, Lock, CheckCircle2, Ban, Sparkles, MapPin, LogOut, X, Building, MessageSquare, Clock, Hourglass, RefreshCw, Inbox, Camera, Calendar, BarChart2, BookOpen, Home, Trash2, TrendingDown, Users, Paperclip } from 'lucide-react';
 import { 
   getActiveRooms, 
   getAllHistory, 
@@ -76,18 +77,18 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('overview')} 
             className={`w-full text-left p-4 rounded-2xl font-bold flex items-center gap-3 transition-all ${activeTab === 'overview' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'text-gray-400 hover:bg-[#1c212d] hover:text-white'}`}
           >
-            <span>📊</span> ภาพรวมระบบ
+            <span><BarChart2 className="w-5 h-5 inline-block mr-1" /></span> ภาพรวมระบบ
           </button>
           <button 
             onClick={() => setActiveTab('users')} 
             className={`w-full text-left p-4 rounded-2xl font-bold flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'text-gray-400 hover:bg-[#1c212d] hover:text-white'}`}
           >
-            <span>👥</span> จัดการผู้ใช้ ({userList.length})
+            <span><Users className="w-5 h-5 inline-block mr-1" /></span> จัดการผู้ใช้ ({userList.length})
           </button>
         </div>
 
         <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 hover:bg-red-500/10 text-left p-4 rounded-2xl transition-all text-sm font-bold flex items-center gap-3">
-          <span>🚪</span> ออกจากระบบ
+          <span><LogOut className="w-5 h-5 inline-block mr-1" /></span> ออกจากระบบ
         </button>
       </div>
 
@@ -95,7 +96,7 @@ export default function AdminDashboard() {
       <div className="flex-1 p-10 overflow-y-auto">
         {!configured && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between">
-            <span>⚠️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code></span>
+            <span>️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code></span>
           </div>
         )}
 
@@ -105,7 +106,7 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center mb-10">
               <h2 className="text-3xl font-bold text-white">ภาพรวมระบบ (Dashboard)</h2>
               <button onClick={() => fetchAdminData()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
-                🔄 รีเฟรชข้อมูล
+                <RefreshCw className="w-4 h-4 inline-block mr-1" /> รีเฟรชข้อมูล
               </button>
             </div>
 
@@ -141,7 +142,7 @@ export default function AdminDashboard() {
             {/* ตารางแสดงห้องเรียนที่กำลัง Live */}
             <div className="bg-[#151923] border border-[#1e2233] rounded-3xl shadow-xl overflow-hidden mb-8">
               <div className="p-6 border-b border-[#1e2233] bg-[#1c212d]">
-                <h3 className="text-xl font-bold text-emerald-400">🔴 คลาสเรียนที่กำลังเปิดอยู่ตอนนี้</h3>
+                <h3 className="text-xl font-bold text-emerald-400"><span className="text-rose-500 text-sm">●</span> คลาสเรียนที่กำลังเปิดอยู่ตอนนี้</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -189,7 +190,7 @@ export default function AdminDashboard() {
                 <p className="text-gray-400 text-sm mt-1">ข้อมูลผู้ใช้ที่บันทึกลงฐานข้อมูล Supabase ตาราง <code>users</code></p>
               </div>
               <button onClick={() => fetchAdminData()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
-                🔄 รีเฟรชข้อมูล
+                <RefreshCw className="w-4 h-4 inline-block mr-1" /> รีเฟรชข้อมูล
               </button>
             </div>
 

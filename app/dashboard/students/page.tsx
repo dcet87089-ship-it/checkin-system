@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, Pin, Smartphone, Lock, CheckCircle2, Ban, Sparkles, MapPin, LogOut, X, Building, MessageSquare, Clock, Hourglass, RefreshCw, Inbox, Camera, Calendar, BarChart2 } from 'lucide-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 
 // === นำเข้า Supabase ===
@@ -200,7 +201,7 @@ export default function StudentDashboard() {
       console.error("Ejection sync error:", e);
     }
 
-    alert("🚨 คุณถูกเด้งออกจากห้องเรียนทันที!\n\nสาเหตุ: มีการปิด GPS หรือไม่ยอมรับตำแหน่งพิกัดระหว่างเรียน\n\n📌 ระบบได้บันทึกเวลาเรียนสะสมไว้ให้แล้ว หากเปิด GPS แล้วเข้าห้องใหม่อีกครั้ง ระบบจะนับเวลาเรียนต่อกันทันที");
+    alert(" คุณถูกเด้งออกจากห้องเรียนทันที!\n\nสาเหตุ: มีการปิด GPS หรือไม่ยอมรับตำแหน่งพิกัดระหว่างเรียน\n\n ระบบได้บันทึกเวลาเรียนสะสมไว้ให้แล้ว หากเปิด GPS แล้วเข้าห้องใหม่อีกครั้ง ระบบจะนับเวลาเรียนต่อกันทันที");
   };
 
   // เมื่อเข้าห้องเรียน: ติดตามพิกัดต่อเนื่องด้วย watchPosition ที่เสถียร ไม่เด้งออกเพราะสัญญาณแกว่ง
@@ -395,7 +396,7 @@ export default function StudentDashboard() {
             isDone = true;
             setGpsStatus('denied');
             setIsGpsActive(false);
-            alert("⚠️ คุณปฏิเสธสิทธิ์การเข้าถึงตำแหน่ง GPS\n\nวิธีกดอนุญาตในเบราว์เซอร์:\n📱 บน Safari (iPhone/iPad): แตะปุ่ม 'aA' ด้านล่างหรือบนแถบ URL > การตั้งค่าเว็บไซต์ > ตำแหน่งที่ตั้ง > เลือก 'อนุญาต (Allow)'\n📱 บน Chrome (Android): แตะไอคอนกุญแจ 🔒 ข้าง URL > สิทธิ์ (Permissions) > ตำแหน่ง (Location) > เลือก 'อนุญาต (Allow)'");
+            alert("⚠️ คุณปฏิเสธสิทธิ์การเข้าถึงตำแหน่ง GPS\n\nวิธีกดอนุญาตในเบราว์เซอร์:\n บน Safari (iPhone/iPad): แตะปุ่ม 'aA' ด้านล่างหรือบนแถบ URL > การตั้งค่าเว็บไซต์ > ตำแหน่งที่ตั้ง > เลือก 'อนุญาต (Allow)'\n บน Chrome (Android): แตะไอคอนกุญแจ  ข้าง URL > สิทธิ์ (Permissions) > ตำแหน่ง (Location) > เลือก 'อนุญาต (Allow)'");
             resolve(null);
             return;
           }
@@ -633,11 +634,11 @@ export default function StudentDashboard() {
 
   if (isGpsOff) {
       statusColor = "bg-rose-500/20 text-rose-500 border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.3)] animate-pulse";
-      statusMessage = "🚨 คุณปิด GPS! (ระบบแจ้งอาจารย์แล้ว / ถือว่าขาดเรียน)";
+      statusMessage = " คุณปิด GPS! (ระบบแจ้งอาจารย์แล้ว / ถือว่าขาดเรียน)";
       distTextColor = "text-rose-500";
   } else if (dist <= 50) {
       statusColor = "bg-[#00b87c]/10 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold border-[#00b87c]/30 shadow-[0_0_20px_rgba(0,184,124,0.2)]";
-      statusMessage = "✅ ระยะปลอดภัย (สถานะ: เข้าเรียน)";
+      statusMessage = "ระยะปลอดภัย (สถานะ: เข้าเรียน)";
       distTextColor = "text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold";
   } else if (dist <= 100) {
       statusColor = "bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]";
@@ -645,7 +646,7 @@ export default function StudentDashboard() {
       distTextColor = "text-amber-500";
   } else {
       statusColor = "bg-rose-500/10 text-rose-500 border-rose-500/30 shadow-[0_0_20px_rgba(225,29,72,0.2)]";
-      statusMessage = "🚫 ไกลเกิน 100 เมตร (สถานะ: ขาดเรียน)";
+      statusMessage = "ไกลเกิน 100 เมตร (สถานะ: ขาดเรียน)";
       distTextColor = "text-rose-500";
   }
 
@@ -659,17 +660,17 @@ export default function StudentDashboard() {
     <div className="flex flex-col md:flex-row min-h-screen bg-cosmic animate-gradient-bg relative overflow-hidden text-gray-200 font-sans relative">
       
       
-      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      {/* Ultra Holographic Ambient Orbs */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
       <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
       
-      {/* 🌌 Animated Stars / Particles overlay */}
+      {/*  Animated Stars / Particles overlay */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
 {/* Mobile Top Header (สำหรับสมาร์ทโฟนและแท็บเล็ต) */}
       <header className="md:hidden glass-panel animate-float-delayed border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2">
-          <span className="text-xl">📍</span>
+          <span className="text-xl"><MapPin className="w-4 h-4 inline-block mr-1" /></span>
           <div>
             <h1 className="text-base font-black text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold leading-tight">CheckIn</h1>
             <p className="text-[11px] text-gray-400 leading-none">{userData.name} ({userData.userId})</p>
@@ -680,7 +681,7 @@ export default function StudentDashboard() {
           onClick={handleLogout}
           className="text-xs bg-gray-800/80 hover:bg-rose-900/40 border border-gray-700 hover:border-rose-500/50 text-gray-300 hover:text-rose-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 font-semibold"
         >
-          <span>🚪</span> ออกจากระบบ
+          <span><LogOut className="w-5 h-5 inline-block mr-1" /></span> ออกจากระบบ
         </button>
       </header>
 
@@ -688,7 +689,7 @@ export default function StudentDashboard() {
       {isGpsOff && joinedClass && (
         <div className="fixed top-16 md:top-5 left-1/2 -translate-x-1/2 z-50 btn-holographic border-2 border-white text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3 sm:gap-4 max-w-xl w-[92%] animate-bounce">
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-2xl sm:text-3xl">🚨</span>
+            <span className="text-2xl sm:text-3xl"></span>
             <div>
               <p className="font-black text-xs sm:text-base">ระบบตรวจพบว่าคุณ "ปิด GPS"!</p>
               <p className="text-[10px] sm:text-xs text-rose-100">ส่งแจ้งเตือนอาจารย์แล้ว กรุณากดเปิดสิทธิ์ GPS ทันทีเพื่อรักษาสิทธิ์</p>
@@ -713,7 +714,7 @@ export default function StudentDashboard() {
           <div className="glass-panel animate-float-delayed border border-gray-800 p-6 sm:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold">เพิ่มวิชาเรียนใหม่</h2>
-              <button onClick={() => setShowAddCourseModal(false)} className="text-gray-300 hover:text-white transition-colors text-xl p-1">✕</button>
+              <button onClick={() => setShowAddCourseModal(false)} className="text-gray-300 hover:text-white transition-colors text-xl p-1"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleSaveCourse} className="space-y-4 sm:space-y-5">
@@ -761,18 +762,18 @@ export default function StudentDashboard() {
       {/* Desktop Sidebar (จอคอมพิวเตอร์และ iPad แนวนอน) */}
       <aside className="hidden md:flex md:w-64 glass-panel animate-float-delayed flex-col py-6 px-4 border-r border-gray-800 relative z-20 shrink-0">
         <h1 className="text-lg font-bold text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold mb-8 mt-2 px-2 flex items-center gap-2">
-          <span>📍</span> CheckIn
+          <span><MapPin className="w-4 h-4 inline-block mr-1" /></span> CheckIn
         </h1>
         
         <div className="space-y-2 flex-1">
           <button type="button" onClick={() => setActiveMenu('home')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'home' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
-            <span className="text-lg">📱</span> เข้าเรียน
+            <span className="text-lg"></span> เข้าเรียน
           </button>
           <button type="button" onClick={() => setActiveMenu('schedule')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'schedule' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
-            <span className="text-lg">📅</span> ตารางเรียน
+            <span className="text-lg"><Calendar className="w-5 h-5 inline-block mr-1" /></span> ตารางเรียน
           </button>
           <button type="button" onClick={() => setActiveMenu('history')} className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3 ${activeMenu === 'history' ? 'btn-holographic text-white' : 'text-gray-400 hover:bg-[#1e2230] hover:text-white border border-transparent'}`}>
-            <span className="text-lg">📊</span> ประวัติเข้าเรียน
+            <span className="text-lg"><BarChart2 className="w-5 h-5 inline-block mr-1" /></span> ประวัติเข้าเรียน
           </button>
         </div>
 
@@ -801,7 +802,7 @@ export default function StudentDashboard() {
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
-          <span className="text-xl leading-none">📱</span>
+          <span className="text-xl leading-none"></span>
           <span className="text-[11px] mt-1">เข้าเรียน</span>
         </button>
         <button
@@ -813,7 +814,7 @@ export default function StudentDashboard() {
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
-          <span className="text-xl leading-none">📅</span>
+          <span className="text-xl leading-none"><Calendar className="w-5 h-5 inline-block mr-1" /></span>
           <span className="text-[11px] mt-1">ตารางเรียน</span>
         </button>
         <button
@@ -825,7 +826,7 @@ export default function StudentDashboard() {
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
-          <span className="text-xl leading-none">📊</span>
+          <span className="text-xl leading-none"><BarChart2 className="w-5 h-5 inline-block mr-1" /></span>
           <span className="text-[11px] mt-1">ประวัติ</span>
         </button>
       </nav>
@@ -853,7 +854,7 @@ export default function StudentDashboard() {
                 <div className="glass-panel border border-gray-800 rounded-2xl p-4 sm:p-5 mb-6 text-sm shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">📍</span>
+                      <span className="text-2xl"><MapPin className="w-4 h-4 inline-block mr-1" /></span>
                       <div>
                         <span className="font-bold text-gray-200 block text-xs sm:text-sm">
                           พิกัด GPS บนอุปกรณ์ของคุณ:
@@ -861,11 +862,11 @@ export default function StudentDashboard() {
                         {myLocation.lat !== 0 ? (
                           <span className="text-emerald-400 font-mono text-xs flex items-center gap-1.5 mt-0.5">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            {myLocation.lat.toFixed(5)}, {myLocation.lng.toFixed(5)} {gpsAccuracy ? `(±${gpsAccuracy}ม.)` : ''}
+                            {myLocation.lat.toFixed(5)}, {myLocation.lng.toFixed(5)} {gpsAccuracy ? `(+/-${gpsAccuracy}ม.)` : ''}
                           </span>
                         ) : (
                           <span className="text-amber-400 text-xs mt-0.5 block">
-                            {gpsStatus === 'requesting' ? '⏳ กำลังขอสิทธิ์และรับพิกัดจากเครื่อง...' : '⚠️ ยังไม่ได้รับพิกัด GPS'}
+                            {gpsStatus === 'requesting' ? '<Hourglass className="w-4 h-4 inline-block mr-1" /> กำลังขอสิทธิ์และรับพิกัดจากเครื่อง...' : '⚠️ ยังไม่ได้รับพิกัด GPS'}
                           </span>
                         )}
                       </div>
@@ -880,16 +881,16 @@ export default function StudentDashboard() {
                           : 'btn-holographic hover:bg-[#00a36e] text-white animate-pulse'
                       }`}
                     >
-                      {myLocation.lat !== 0 ? '🔄 รีเฟรชพิกัดใหม่' : '👉 แตะที่นี่เพื่อเปิด GPS (เบราว์เซอร์จะเด้งถาม)'}
+                      {myLocation.lat !== 0 ? '<RefreshCw className="w-4 h-4 inline-block mr-1" /> รีเฟรชพิกัดใหม่' : ' แตะที่นี่เพื่อเปิด GPS (เบราว์เซอร์จะเด้งถาม)'}
                     </button>
                   </div>
 
                   {gpsStatus === 'denied' && (
                     <div className="mt-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-                      <p className="font-bold mb-1">🚨 เบราว์เซอร์ยังไม่ได้รับอนุญาตสิทธิ์พิกัดตำแหน่ง:</p>
+                      <p className="font-bold mb-1"> เบราว์เซอร์ยังไม่ได้รับอนุญาตสิทธิ์พิกัดตำแหน่ง:</p>
                       <p className="text-[11px] text-rose-200 leading-relaxed">
-                        • <strong>iPhone / iPad (Safari):</strong> แตะที่ปุ่ม <span className="bg-rose-950 px-1 py-0.5 rounded font-mono">aA</span> ด้านล่างหรือบนแถบ URL &gt; การตั้งค่าเว็บไซต์ &gt; ตำแหน่งที่ตั้ง &gt; เลือก <strong>อนุญาต (Allow)</strong><br />
-                        • <strong>Android (Chrome):</strong> แตะที่ไอคอนกุญแจ <span className="bg-rose-950 px-1 py-0.5 rounded font-mono">🔒</span> ข้าง URL &gt; สิทธิ์ (Permissions) &gt; ตำแหน่ง &gt; เลือก <strong>อนุญาต (Allow)</strong>
+                        - <strong>iPhone / iPad (Safari):</strong> แตะที่ปุ่ม <span className="bg-rose-950 px-1 py-0.5 rounded font-mono">aA</span> ด้านล่างหรือบนแถบ URL &gt; การตั้งค่าเว็บไซต์ &gt; ตำแหน่งที่ตั้ง &gt; เลือก <strong>อนุญาต (Allow)</strong><br />
+                        - <strong>Android (Chrome):</strong> แตะที่ไอคอนกุญแจ <span className="bg-rose-950 px-1 py-0.5 rounded font-mono"></span> ข้าง URL &gt; สิทธิ์ (Permissions) &gt; ตำแหน่ง &gt; เลือก <strong>อนุญาต (Allow)</strong>
                       </p>
                     </div>
                   )}
@@ -906,7 +907,7 @@ export default function StudentDashboard() {
                   </div>
                 ) : (
                   <button type="button" onClick={handleStartScan} className="w-full btn-holographic hover:bg-[#00a36e] text-white py-4 rounded-xl font-bold text-lg mb-8 transition-colors flex justify-center items-center gap-2">
-                    <span className="text-2xl">📸</span> สแกน QR Code (ต้องเปิด GPS)
+                    <span className="text-2xl"><Camera className="w-6 h-6 inline-block mb-2" /></span> สแกน QR Code (ต้องเปิด GPS)
                   </button>
                 )}
 
@@ -947,7 +948,7 @@ export default function StudentDashboard() {
                       <h3 className="text-2xl sm:text-4xl font-black text-white">{joinedClass.code}</h3>
                     </div>
                     <button type="button" onClick={handleLeaveRoom} className="bg-gray-800/80 hover:bg-red-500/20 border border-gray-700 hover:border-red-500/50 text-gray-300 hover:text-red-400 px-3.5 py-2 rounded-xl font-bold transition-all text-xs sm:text-sm shadow">
-                       🚪 ออกจากการติดตาม
+                       <LogOut className="w-5 h-5 inline-block mr-1" /> ออกจากการติดตาม
                     </button>
                   </div>
 
@@ -963,20 +964,20 @@ export default function StudentDashboard() {
                     {/* ข้อมูลเวลาเรียนสะสม */}
                     <div className="w-full max-w-md bg-[#11141c] border border-gray-800 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left mb-3 shadow-inner">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400 font-medium">⏱️ เวลาเรียนสะสม:</span>
+                        <span className="text-gray-400 font-medium"><Clock className="w-4 h-4 inline-block mr-1" />️ เวลาเรียนสะสม:</span>
                         <span className="font-mono text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold font-black text-xs sm:text-sm">
                           {formatActiveDuration(currentStudents.find(s => s.studentId === userData.userId)?.totalActiveSeconds)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400 font-medium">🕒 เข้าห้องครั้งแรก:</span>
+                        <span className="text-gray-400 font-medium"><Clock className="w-4 h-4 inline-block mr-1" /> เข้าห้องครั้งแรก:</span>
                         <span className="font-mono text-gray-300 font-bold">
                           {currentStudents.find(s => s.studentId === userData.userId)?.firstJoinTime || currentStudents.find(s => s.studentId === userData.userId)?.joinTime || '-'}
                         </span>
                       </div>
                       {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) > 0 && (
                         <div className="flex justify-between items-center text-amber-400 pt-1 border-t border-gray-800/60">
-                          <span className="font-medium">🔄 เข้าเรียนต่อเนื่อง:</span>
+                          <span className="font-medium"><RefreshCw className="w-4 h-4 inline-block mr-1" /> เข้าเรียนต่อเนื่อง:</span>
                           <span className="font-bold">ครั้งที่ {(currentStudents.find(s => s.studentId === userData.userId)?.reconnectCount || 0) + 1}</span>
                         </div>
                       )}
@@ -984,13 +985,13 @@ export default function StudentDashboard() {
 
                     <div className="w-full max-w-md glass-panel animate-float-delayed border border-gray-800/80 rounded-xl p-3.5 sm:p-4 text-xs space-y-2 text-left">
                       <div className="flex justify-between items-center flex-wrap gap-1">
-                        <span className="text-gray-400">📍 พิกัดของคุณ:</span>
+                        <span className="text-gray-400"><MapPin className="w-4 h-4 inline-block mr-1" /> พิกัดของคุณ:</span>
                         <span className="font-mono text-emerald-400 font-bold text-[11px] sm:text-xs">
                           {myLocation.lat ? `${myLocation.lat.toFixed(5)}, ${myLocation.lng.toFixed(5)}` : 'กำลังระบุพิกัด...'}
                         </span>
                       </div>
                       <div className="flex justify-between items-center flex-wrap gap-1">
-                        <span className="text-gray-400">🏫 พิกัดห้องเรียนอาจารย์:</span>
+                        <span className="text-gray-400"><Building className="w-4 h-4 inline-block mr-1" /> พิกัดห้องเรียนอาจารย์:</span>
                         <span className="font-mono text-blue-400 font-bold text-[11px] sm:text-xs">
                           {teacherLocation.lat ? `${teacherLocation.lat.toFixed(5)}, ${teacherLocation.lng.toFixed(5)}` : 'ไม่มีข้อมูลพิกัด'}
                         </span>
@@ -1002,7 +1003,7 @@ export default function StudentDashboard() {
                       onClick={() => requestStudentGPS()}
                       className="mt-4 text-xs text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold hover:underline flex items-center gap-1 font-bold py-1 px-2 rounded"
                     >
-                      🔄 แตะเพื่อรีเฟรชพิกัด GPS ของอุปกรณ์
+                      <RefreshCw className="w-4 h-4 inline-block mr-1" /> แตะเพื่อรีเฟรชพิกัด GPS ของอุปกรณ์
                     </button>
                   </div>
                 </div>
@@ -1011,7 +1012,7 @@ export default function StudentDashboard() {
                 <div className="order-2 lg:order-1 lg:col-span-1 glass-panel animate-float-delayed border border-gray-800 rounded-2xl flex flex-col overflow-hidden h-[420px] sm:h-[500px] lg:h-[600px] shadow-xl">
                   <div className="p-3.5 sm:p-4 border-b border-gray-800 bg-[#1a1d27] flex items-center justify-between">
                     <h3 className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
-                      <span>💬</span> แชทห้องเรียน
+                      <span><MessageSquare className="w-4 h-4 inline-block mr-1" /></span> แชทห้องเรียน
                     </h3>
                     <span className="text-[10px] text-gray-400 font-mono">{chatMessages.length} ข้อความ</span>
                   </div>
@@ -1070,8 +1071,8 @@ export default function StudentDashboard() {
                             <div className="font-bold text-white text-base mb-1">{item.code}</div>
                             <p className="text-gray-400 text-xs mb-3 truncate font-medium">{item.name}</p>
                             <div className="flex flex-col gap-1.5 mt-auto">
-                               {item.time && <div className="bg-gray-800/50 text-gray-300 text-[10px] font-bold px-2 py-1 rounded w-fit">🕒 {item.time}</div>}
-                               {item.location && <div className="bg-gray-800/50 text-gray-300 text-[10px] font-bold px-2 py-1 rounded w-fit">📍 {item.location}</div>}
+                               {item.time && <div className="bg-gray-800/50 text-gray-300 text-[10px] font-bold px-2 py-1 rounded w-fit"><Clock className="w-4 h-4 inline-block mr-1" /> {item.time}</div>}
+                               {item.location && <div className="bg-gray-800/50 text-gray-300 text-[10px] font-bold px-2 py-1 rounded w-fit"><MapPin className="w-4 h-4 inline-block mr-1" /> {item.location}</div>}
                             </div>
                           </div>
                         ))
@@ -1190,18 +1191,18 @@ export default function StudentDashboard() {
                                    <td className="p-4 sm:p-6 text-center text-gray-300 text-xs sm:text-sm">{record.time}</td>
                                    <td className="p-4 sm:p-6 text-center h-full align-middle">
                                       <div className="flex justify-center items-center w-full h-full pt-1">
-                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">✅ {record.status} {record.distance && `(${record.distance}m)`}</span>}
+                                        {record.type === 'success' && <span className="inline-flex items-center justify-center bg-[#00b87c]/10 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)] font-bold border border-[#00b87c]/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">{record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
-                                        {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">🚫 {record.status}</span>}
+                                        {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">{record.status}</span>}
                                       </div>
-                                      <div className="text-[10px] text-gray-400 mt-2 flex gap-2 justify-center flex-wrap"><span className="text-[#00b87c]">🟢 {formatDuration(record.greenSeconds)}</span><span className="text-amber-500">🟡 {formatDuration(record.yellowSeconds)}</span><span className="text-rose-500">🔴 {formatDuration(record.redSeconds)}</span></div>
+                                      <div className="text-[10px] text-gray-400 mt-2 flex gap-2 justify-center flex-wrap"><span className="text-[#00b87c]"><span className="text-[#00b87c] text-sm">●</span> {formatDuration(record.greenSeconds)}</span><span className="text-amber-500"><span className="text-amber-500 text-sm">●</span> {formatDuration(record.yellowSeconds)}</span><span className="text-rose-500"><span className="text-rose-500 text-sm">●</span> {formatDuration(record.redSeconds)}</span></div>
                                    </td>
                                 </tr>
                              ))
                           ) : (
                              <tr>
                                 <td colSpan={4} className="py-20 text-center">
-                                   <div className="text-4xl mb-4 opacity-20 grayscale">📭</div>
+                                   <div className="text-4xl mb-4 opacity-20 grayscale"><Inbox className="w-10 h-10 inline-block mb-2" /></div>
                                    <p className="font-medium text-gray-300">ไม่มีข้อมูลเข้าเรียน</p>
                                 </td>
                              </tr>

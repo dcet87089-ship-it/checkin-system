@@ -1,13 +1,14 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Mail, Key, User, GraduationCap, Building2, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { getUserByEmail, upsertUser } from '../lib/supabase';
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [role, setRole] = useState<'teacher' | 'student' | 'admin'>('student');
+  const [role, setRole] = useState<'teacher' | 'student'>('student');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
@@ -75,12 +76,12 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-cosmic animate-gradient-bg relative overflow-hidden relative overflow-hidden">
       
       
-      {/* 🔮 Ultra Holographic Ambient Orbs */}
+      {/*  Ultra Holographic Ambient Orbs */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#00e5ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#7a00ff] rounded-full mix-blend-screen filter blur-[150px] opacity-30 animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }}></div>
       <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#ff00a0] rounded-full mix-blend-screen filter blur-[180px] opacity-20 animate-pulse-glow pointer-events-none" style={{ animationDelay: '4s' }}></div>
       
-      {/* 🌌 Animated Stars / Particles overlay */}
+      {/*  Animated Stars / Particles overlay */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
 {/* ฝัง CSS สำหรับอนิเมชันไฟวิ่ง */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -115,7 +116,7 @@ export default function RegisterPage() {
           {/* ข้อความแจ้งเตือน Error */}
           {errorMessage && (
             <div className="w-full mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm text-center animate-fadeIn">
-              ⚠️ {errorMessage}
+              <AlertCircle className="w-5 h-5" />️ {errorMessage}
             </div>
           )}
 
@@ -149,18 +150,7 @@ export default function RegisterPage() {
                 >
                   <span>👨‍🏫</span> อาจารย์
                 </button>
-                  <button 
-                    type="button"
-                    onClick={() => setRole('admin')}
-                    className={`flex-1 py-3.5 rounded-2xl font-bold transition-all duration-300 border flex items-center justify-center gap-2 ${
-                      role === 'admin' 
-                        ? 'bg-gradient-to-r from-[#ffaa00] to-[#ff4400] text-white border-transparent shadow-[0_0_20px_rgba(255,170,0,0.4)] scale-[1.02]' 
-                        : 'bg-white/5 text-gray-400 border-white/10 hover:text-white hover:border-white/30'
-                    }`}
-                  >
-                    <span className="text-xl">🛡️</span>
-                    <span>แอดมิน</span>
-                  </button>
+                  
 
               </div>
             </div>
@@ -196,7 +186,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'admin' ? "ชื่อผู้ดูแลระบบ" : "ชื่อจริง-นามสกุล"} 
+                  placeholder={"ชื่อจริง-นามสกุล"} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -216,7 +206,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'admin' ? "ADMIN-XXX" : (role === 'teacher' ? "T1001" : "รหัสนักศึกษา")} 
+                  placeholder={role === 'teacher' ? "T1001" : "รหัสนักศึกษา"} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
@@ -262,7 +252,7 @@ export default function RegisterPage() {
                 href="/" 
                 className="text-[#00e5ff] font-bold hover:underline transition-all inline-flex items-center gap-1 ml-1"
               >
-                เข้าสู่ระบบ (Login) →
+                เข้าสู่ระบบ (Login) <ArrowRight className="w-5 h-5" />
               </Link>
             </p>
           </div>
