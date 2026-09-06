@@ -70,13 +70,12 @@ function formatActiveDuration(totalSeconds?: number) {
 
 export default function StudentDashboard() {
   const formatDuration = (totalSeconds?: number) => {
-    if (!totalSeconds || totalSeconds <= 0) return "0 วิ";
+    if (!totalSeconds || totalSeconds <= 0) return "0 นาที";
     const hrs = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    if (hrs > 0) return `${hrs} ชม. ${mins} นาที`;
-    if (mins === 0) return `${secs} วิ`;
-    return `${mins} นาที ${secs} วิ`;
+    if (hrs > 0) return `${hrs} ชม. ${mins} น.`;
+    if (mins === 0) return `< 1 นาที`;
+    return `${mins} นาที`;
   };
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState<'home' | 'schedule' | 'history'>('history');
@@ -346,7 +345,10 @@ export default function StudentDashboard() {
                 name: record.courseName,
                 time: myRecord.joinTime || '-',
                 status: isOffline ? "ออฟไลน์ก่อนปิด" : "เข้าเรียนปกติ",
-                type: isOffline ? "warning" : "success"
+                type: isOffline ? "warning" : "success",
+                  greenSeconds: myRecord.greenSeconds,
+                  yellowSeconds: myRecord.yellowSeconds,
+                  redSeconds: myRecord.redSeconds
               });
             }
           });
