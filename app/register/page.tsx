@@ -7,7 +7,7 @@ import { getUserByEmail, upsertUser } from '../lib/supabase';
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [role, setRole] = useState<'teacher' | 'student'>('student');
+  const [role, setRole] = useState<'teacher' | 'student' | 'admin'>('student');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
@@ -149,6 +149,19 @@ export default function RegisterPage() {
                 >
                   <span>👨‍🏫</span> อาจารย์
                 </button>
+                  <button 
+                    type="button"
+                    onClick={() => setRole('admin')}
+                    className={`flex-1 py-3.5 rounded-2xl font-bold transition-all duration-300 border flex items-center justify-center gap-2 ${
+                      role === 'admin' 
+                        ? 'bg-gradient-to-r from-[#ffaa00] to-[#ff4400] text-white border-transparent shadow-[0_0_20px_rgba(255,170,0,0.4)] scale-[1.02]' 
+                        : 'bg-white/5 text-gray-400 border-white/10 hover:text-white hover:border-white/30'
+                    }`}
+                  >
+                    <span className="text-xl">🛡️</span>
+                    <span>แอดมิน</span>
+                  </button>
+
               </div>
             </div>
 
@@ -183,7 +196,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'teacher' ? "ชื่อจริง-นามสกุล" : "ชื่อจริง-นามสกุล"} 
+                  placeholder={role === 'admin' ? "ชื่อผู้ดูแลระบบ" : "ชื่อจริง-นามสกุล"} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -203,7 +216,7 @@ export default function RegisterPage() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder={role === 'teacher' ? "T1001" : "รหัสนักศึกษา"} 
+                  placeholder={role === 'admin' ? "ADMIN-XXX" : (role === 'teacher' ? "T1001" : "รหัสนักศึกษา")} 
                   className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-6 py-3.5 focus:outline-none focus:border-[#00e5ff] focus:bg-white/10 transition-all placeholder-gray-500 text-sm"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
