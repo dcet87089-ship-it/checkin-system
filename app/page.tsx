@@ -24,14 +24,15 @@ export default function LoginPage() {
     }
 
     try {
-      if (trimmedEmail === 'admin@checkin.com' && userId.trim() === 'ADMIN1449') {
-        const adminUser = { email: trimmedEmail, name: 'ผู้ดูแลระบบ', role: 'admin', userId: 'ADMIN1449' };
-        localStorage.setItem('current_user', JSON.stringify(adminUser));
-        router.push('/admin');
+      
+
+      if (trimmed === 'admin@checkin.com') {
+        setUserPreview({ name: 'ผู้ดูแลระบบ', role: 'admin' });
+        setErrorMessage('');
         return;
       }
 
-      const user = await getUserByEmail(trimmed);
+        const user = await getUserByEmail(trimmed);
       if (user) {
         setUserPreview({ name: user.name, role: user.role });
         setErrorMessage('');
@@ -53,7 +54,21 @@ export default function LoginPage() {
 
     try {
       // ตรวจสอบกับฐานข้อมูล Supabase ตาราง users โดยตรง
-      const user = await getUserByEmail(trimmedEmail);
+      // Hardcoded Admin Login
+      if (trimmedEmail === 'admin@checkin.com') {
+        if (userId.trim() === 'ADMIN1449') {
+            const adminUser = { email: trimmedEmail, name: 'ผู้ดูแลระบบ', role: 'admin', userId: 'ADMIN1449' };
+            localStorage.setItem('current_user', JSON.stringify(adminUser));
+            router.push('/admin');
+            return;
+        } else {
+            setErrorMessage('รหัสประจำตัวแอดมินไม่ถูกต้อง!');
+            setLoading(false);
+            return;
+        }
+      }
+
+        const user = await getUserByEmail(trimmedEmail);
 
       if (!user) {
           setErrorMessage('ไม่พบอีเมลนี้ในระบบ! โปรดตรวจสอบให้แน่ใจว่าลงทะเบียนแล้ว');

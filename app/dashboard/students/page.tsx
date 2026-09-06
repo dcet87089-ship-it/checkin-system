@@ -28,6 +28,8 @@ interface UserDataType {
 interface HistoryRecordType {
   id: string;
   day: number;
+  month?: number;
+  year?: number;
   dateStr: string;
   code: string;
   name: string;
@@ -341,6 +343,8 @@ export default function StudentDashboard() {
               myRecords.push({
                 id: record.id,
                 day: dateObj.getDate(),
+                month: dateObj.getMonth(),
+                year: dateObj.getFullYear(),
                 dateStr: record.dateStr,
                 code: record.courseCode,
                 name: record.courseName,
@@ -650,11 +654,14 @@ export default function StudentDashboard() {
       distTextColor = "text-rose-500";
   }
 
-  const filteredHistory = selectedDate ? historyData.filter((h: HistoryRecordType) => h.day === selectedDate) : historyData;
-  const totalClasses = historyData.length; 
-  const successClasses = historyData.filter(h => h.type === 'success').length; 
-  const warningClasses = historyData.filter(h => h.type === 'warning').length; 
-  const errorClasses = historyData.filter(h => h.type === 'error').length; 
+  const filteredHistory = selectedDate 
+    ? historyData.filter((h: HistoryRecordType) => h.day === selectedDate && h.month === currentMonth && h.year === currentYear) 
+    : historyData.filter((h: HistoryRecordType) => h.month === currentMonth && h.year === currentYear);
+  const currentMonthHistory = historyData.filter(h => h.month === currentMonth && h.year === currentYear);
+  const totalClasses = currentMonthHistory.length; 
+  const successClasses = currentMonthHistory.filter(h => h.type === 'success').length; 
+  const warningClasses = currentMonthHistory.filter(h => h.type === 'warning').length; 
+  const errorClasses = currentMonthHistory.filter(h => h.type === 'error').length; 
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-cosmic animate-gradient-bg relative overflow-hidden text-gray-200 font-sans relative">
@@ -1132,7 +1139,7 @@ export default function StudentDashboard() {
                     ))}
                     
                     {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day: number) => {
-                       const dayRecords = historyData.filter((h: HistoryRecordType) => h.day === day);
+                       const dayRecords = historyData.filter((h: HistoryRecordType) => h.day === day && h.month === currentMonth && h.year === currentYear);
                        let bgColor = "hover:bg-gray-800 text-gray-300 border border-transparent";
                        let isSpecial = false;
                        
