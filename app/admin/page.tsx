@@ -1,239 +1,406 @@
+
 "use client";
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Pin, Smartphone, Lock, CheckCircle2, Ban, Sparkles, MapPin, LogOut, X, Building, MessageSquare, Clock, Hourglass, RefreshCw, Inbox, Camera, Calendar, BarChart2, BookOpen, Home, Trash2, TrendingDown, Users, Paperclip } from 'lucide-react';
 import { 
-  getActiveRooms, 
-  getAllHistory, 
-  getAllUsers,
-  subscribeToHistory, 
-  isSupabaseConfigured,
-  RoomRecord,
-  HistoryRecord,
-  UserProfile
+  AlertCircle, ShieldAlert, LogOut, RefreshCw, Users, Database, 
+  Trash2, Edit, Power, Activity, Server, History, PlaySquare, X
+} from 'lucide-react';
+import { 
+  getActiveRooms, getAllHistory, getAllUsers,
+  deleteUser, upsertUser, deleteRoom, deleteHistory,
+  isSupabaseConfigured, RoomRecord, HistoryRecord, UserProfile
 } from '../lib/supabase';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'rooms' | 'history'>('overview');
   
-  // State เก็บข้อมูลสถิติ
   const [activeRooms, setActiveRooms] = useState<RoomRecord[]>([]);
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [userList, setUserList] = useState<UserProfile[]>([]);
   const [configured, setConfigured] = useState(true);
 
+  // Edit Modal State
+  const [editUser, setEditUser] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', userId: '', role: 'student' });
+  const [actionLoading, setActionLoading] = useState(false);
+
   const fetchAdminData = async () => {
     try {
+      setLoading(true);
       const [roomsData, historyData, usersData] = await Promise.all([
         getActiveRooms(),
         getAllHistory(),
-        getAllUsers(),
+        getAllUsers()
       ]);
-      setActiveRooms(roomsData);
-      setHistoryRecords(historyData);
-      setUserList(usersData);
+      setActiveRooms(roomsData || []);
+      setHistoryRecords(historyData || []);
+      setUserList(usersData || []);
+      setConfigured(isSupabaseConfigured());
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching admin data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    setConfigured(isSupabaseConfigured());
+    const adminStr = localStorage.getItem('current_user');
+    if (!adminStr) {
+      router.push('/');
+      return;
+    }
+    const admin = JSON.parse(adminStr);
+    if (admin.role !== 'admin') {
+      router.push('/');
+      return;
+    }
     fetchAdminData();
-
-    // ฟังการเปลี่ยนแปลงประวัติแบบ Realtime
-    const unsubscribeHistory = subscribeToHistory(() => {
-      fetchAdminData();
-    });
-
-    return () => {
-      unsubscribeHistory();
-    };
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('current_user');
     router.push('/');
   };
 
-  if (loading) return <div className="min-h-screen bg-[#0b0f19] text-emerald-400 flex items-center justify-center font-bold text-xl">กำลังโหลดระบบหลังบ้าน...</div>;
+  const handleDeleteUser = async (email: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ ${email}?`)) return;
+    setActionLoading(true);
+    const success = await deleteUser(email);
+    if (success) await fetchAdminData();
+    else alert("เกิดข้อผิดพลาดในการลบผู้ใช้");
+    setActionLoading(false);
+  };
+
+  const handleSaveEditUser = async () => {
+    if (!editUser) return;
+    setActionLoading(true);
+    const updatedUser = { 
+      ...editUser, 
+      ...editForm, 
+      role: editForm.role as 'teacher' | 'student' | 'admin' 
+    };
+    const success = await upsertUser(updatedUser);
+    if (success) {
+      setEditUser(null);
+      await fetchAdminData();
+    } else {
+      alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
+    }
+    setActionLoading(false);
+  };
+
+  const handleForceCloseRoom = async (roomCode: string) => {
+    if (!confirm(`คุณต้องการบังคับปิดห้อง ${roomCode} ใช่หรือไม่?`)) return;
+    setActionLoading(true);
+    const success = await deleteRoom(roomCode);
+    if (success) await fetchAdminData();
+    else alert("เกิดข้อผิดพลาดในการปิดห้อง");
+    setActionLoading(false);
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบประวัติคลาสนี้?`)) return;
+    setActionLoading(true);
+    const success = await deleteHistory(id);
+    if (success) await fetchAdminData();
+    else alert("เกิดข้อผิดพลาดในการลบประวัติ");
+    setActionLoading(false);
+  };
+
+  if (loading && userList.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#05000a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-rose-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-[#0b0f19] text-white font-sans">
-      
-      {/* แถบเมนูด้านซ้าย (Sidebar) */}
-      <div className="w-64 bg-[#151923] p-6 border-r border-[#1e2233] flex flex-col shadow-2xl z-10">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-black text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.4)]">Admin</h1>
-          <p className="text-gray-400 text-xs mt-2">CheckIn System Control</p>
+    <div className="min-h-screen bg-[#05000a] text-gray-200 font-sans selection:bg-rose-900/50 flex">
+      {/* Sidebar - Deep God Mode Theme */}
+      <aside className="w-72 bg-[#0a0510] border-r border-rose-900/30 flex flex-col relative z-10 shadow-[0_0_30px_rgba(225,29,72,0.1)]">
+        <div className="p-8 border-b border-rose-900/30 bg-gradient-to-b from-rose-950/20 to-transparent">
+          <h1 className="text-3xl font-black text-rose-500 tracking-wider flex items-center gap-3 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+            <ShieldAlert className="w-8 h-8" />
+            GOD MODE
+          </h1>
+          <p className="text-rose-400/50 text-xs mt-2 uppercase tracking-[0.2em] font-bold">Absolute Control</p>
         </div>
+
+        <nav className="flex-1 p-4 space-y-2">
+          <button 
+            onClick={() => setActiveTab('overview')}
+            className={`w-full flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'overview' 
+                ? 'bg-rose-600/10 text-rose-400 border border-rose-500/30 shadow-[inset_0_0_20px_rgba(225,29,72,0.1)]' 
+                : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
+            }`}
+          >
+            <Activity className="w-5 h-5" /> ภาพรวมระบบ
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'users' 
+                ? 'bg-rose-600/10 text-rose-400 border border-rose-500/30 shadow-[inset_0_0_20px_rgba(225,29,72,0.1)]' 
+                : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
+            }`}
+          >
+            <Users className="w-5 h-5" /> ผู้ใช้งาน ({userList.length})
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('rooms')}
+            className={`w-full flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'rooms' 
+                ? 'bg-rose-600/10 text-rose-400 border border-rose-500/30 shadow-[inset_0_0_20px_rgba(225,29,72,0.1)]' 
+                : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
+            }`}
+          >
+            <PlaySquare className="w-5 h-5" /> ห้องสด ({activeRooms.length})
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`w-full flex items-center gap-3 px-6 py-4 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'history' 
+                ? 'bg-rose-600/10 text-rose-400 border border-rose-500/30 shadow-[inset_0_0_20px_rgba(225,29,72,0.1)]' 
+                : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
+            }`}
+          >
+            <History className="w-5 h-5" /> ประวัติคลาส ({historyRecords.length})
+          </button>
+        </nav>
+
+        <div className="p-4 mt-auto border-t border-rose-900/30">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-gray-400 hover:bg-rose-950 hover:text-rose-400 transition-colors"
+          >
+            <Power className="w-4 h-4" /> ออกจากระบบ
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-10 h-screen overflow-y-auto relative">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-600/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
         
-        <div className="space-y-4 flex-1">
-          <button 
-            onClick={() => setActiveTab('overview')} 
-            className={`w-full text-left p-4 rounded-2xl font-bold flex items-center gap-3 transition-all ${activeTab === 'overview' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'text-gray-400 hover:bg-[#1c212d] hover:text-white'}`}
-          >
-            <span><BarChart2 className="w-5 h-5 inline-block mr-1" /></span> ภาพรวมระบบ
-          </button>
-          <button 
-            onClick={() => setActiveTab('users')} 
-            className={`w-full text-left p-4 rounded-2xl font-bold flex items-center gap-3 transition-all ${activeTab === 'users' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'text-gray-400 hover:bg-[#1c212d] hover:text-white'}`}
-          >
-            <span><Users className="w-5 h-5 inline-block mr-1" /></span> จัดการผู้ใช้ ({userList.length})
-          </button>
-        </div>
-
-        <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 hover:bg-red-500/10 text-left p-4 rounded-2xl transition-all text-sm font-bold flex items-center gap-3">
-          <span><LogOut className="w-5 h-5 inline-block mr-1" /></span> ออกจากระบบ
-        </button>
-      </div>
-
-      {/* พื้นที่เนื้อหาหลัก (Main Content) */}
-      <div className="flex-1 p-10 overflow-y-auto">
-        {!configured && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between">
-            <span>️ <strong>คำแนะนำ:</strong> ยังไม่ได้ตั้งค่า Supabase URL หรือ Anon Key ในไฟล์ <code>.env.local</code></span>
-          </div>
-        )}
-
-        {/* Tab 1: ภาพรวมระบบ */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="animate-fadeIn">
-            <div className="flex justify-between items-center mb-10">
-              <h2 className="text-3xl font-bold text-white">ภาพรวมระบบ (Dashboard)</h2>
-              <button onClick={() => fetchAdminData()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
-                <RefreshCw className="w-4 h-4 inline-block mr-1" /> รีเฟรชข้อมูล
+          <div className="animate-fadeIn space-y-8">
+            <div className="flex justify-between items-end">
+              <div>
+                <h2 className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">ระบบควบคุมหลัก (Main Terminal)</h2>
+                <p className="text-gray-400 mt-2">ศูนย์กลางการควบคุมระบบ CheckIn ทั้งหมด</p>
+              </div>
+              <button onClick={() => fetchAdminData()} className="bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-400 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center shadow-[0_0_15px_rgba(225,29,72,0.2)]">
+                <RefreshCw className="w-4 h-4 mr-2" /> ซิงค์ข้อมูลล่าสุด
               </button>
             </div>
 
-            {/* การ์ดสรุปสถิติ */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-              <div className="bg-[#151923] border border-[#1e2233] p-8 rounded-3xl shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                <p className="text-gray-400 text-sm font-medium mb-2">ห้องเรียนที่กำลังเปิดสอน</p>
-                <p className="text-5xl font-black text-white">{activeRooms.length} <span className="text-lg text-gray-500 font-normal">ห้อง</span></p>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              <div className="bg-[#0f0714] border border-rose-900/40 p-8 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.05)] relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.8)]"></div>
+                <Database className="w-8 h-8 text-emerald-500/30 absolute right-4 top-4 group-hover:scale-110 transition-transform" />
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Live Rooms</p>
+                <p className="text-5xl font-black text-white">{activeRooms.length} <span className="text-lg text-emerald-500 font-bold ml-1">Active</span></p>
               </div>
               
-              <div className="bg-[#151923] border border-[#1e2233] p-8 rounded-3xl shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                <p className="text-gray-400 text-sm font-medium mb-2">ประวัติคลาสเรียนทั้งหมด</p>
-                <p className="text-5xl font-black text-white">{historyRecords.length} <span className="text-lg text-gray-500 font-normal">คลาส</span></p>
+              <div className="bg-[#0f0714] border border-rose-900/40 p-8 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.05)] relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.8)]"></div>
+                <History className="w-8 h-8 text-blue-500/30 absolute right-4 top-4 group-hover:scale-110 transition-transform" />
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Total History</p>
+                <p className="text-5xl font-black text-white">{historyRecords.length} <span className="text-lg text-blue-500 font-bold ml-1">Records</span></p>
               </div>
 
-              <div className="bg-[#151923] border border-[#1e2233] p-8 rounded-3xl shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
-                <p className="text-gray-400 text-sm font-medium mb-2">ผู้ใช้งานในระบบ (Supabase)</p>
-                <p className="text-5xl font-black text-white">{userList.length} <span className="text-lg text-gray-500 font-normal">คน</span></p>
+              <div className="bg-[#0f0714] border border-rose-900/40 p-8 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.05)] relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.8)]"></div>
+                <Users className="w-8 h-8 text-purple-500/30 absolute right-4 top-4 group-hover:scale-110 transition-transform" />
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Total Users</p>
+                <p className="text-5xl font-black text-white">{userList.length} <span className="text-lg text-purple-500 font-bold ml-1">Users</span></p>
               </div>
 
-              <div className="bg-[#151923] border border-[#1e2233] p-8 rounded-3xl shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
-                <p className="text-gray-400 text-sm font-medium mb-2">สถานะเซิร์ฟเวอร์ (Supabase)</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-2 flex items-center gap-2">
-                  <span className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse"></span> {configured ? "เชื่อมต่อแล้ว" : "รอตั้งค่า Key"}
+              <div className="bg-[#0f0714] border border-rose-900/40 p-8 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.05)] relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.8)]"></div>
+                <Server className="w-8 h-8 text-rose-500/30 absolute right-4 top-4 group-hover:scale-110 transition-transform" />
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Database Core</p>
+                <p className="text-2xl font-black text-rose-400 mt-2 flex items-center gap-3">
+                  <span className="w-3 h-3 bg-rose-500 rounded-full animate-ping"></span> ONLINE
                 </p>
               </div>
             </div>
-
-            {/* ตารางแสดงห้องเรียนที่กำลัง Live */}
-            <div className="bg-[#151923] border border-[#1e2233] rounded-3xl shadow-xl overflow-hidden mb-8">
-              <div className="p-6 border-b border-[#1e2233] bg-[#1c212d]">
-                <h3 className="text-xl font-bold text-emerald-400"><span className="text-rose-500 text-sm">●</span> คลาสเรียนที่กำลังเปิดอยู่ตอนนี้</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-[#151923] text-gray-400 text-sm border-b border-[#1e2233]">
-                    <tr>
-                      <th className="p-5 font-semibold">รหัสห้อง (Join Code)</th>
-                      <th className="p-5 font-semibold">วิชา</th>
-                      <th className="p-5 font-semibold">อาจารย์ผู้สอน</th>
-                      <th className="p-5 font-semibold text-center">นักศึกษา (คน)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#1e2233]">
-                    {activeRooms.length > 0 ? (
-                      activeRooms.map((room) => (
-                        <tr key={room.id} className="hover:bg-[#1c212d] transition-colors">
-                          <td className="p-5 font-bold text-emerald-400 text-lg tracking-widest">{room.id}</td>
-                          <td className="p-5">
-                            <p className="font-bold text-white">{room.settings?.courseCode}</p>
-                            <p className="text-sm text-gray-400">{room.settings?.name}</p>
-                          </td>
-                          <td className="p-5 text-gray-300">{room.settings?.teacherName}</td>
-                          <td className="p-5 text-center font-bold text-blue-400">{room.students?.length || 0}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="p-10 text-center text-gray-500">
-                          ไม่มีห้องเรียนที่กำลังเปิดสอนในขณะนี้
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Tab 2: จัดการผู้ใช้ */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="animate-fadeIn">
-            <div className="flex justify-between items-center mb-10">
-              <div>
-                <h2 className="text-3xl font-bold text-white">จัดการผู้ใช้งานในระบบ (Users)</h2>
-                <p className="text-gray-400 text-sm mt-1">ข้อมูลผู้ใช้ที่บันทึกลงฐานข้อมูล Supabase ตาราง <code>users</code></p>
-              </div>
-              <button onClick={() => fetchAdminData()} className="bg-[#1c212d] hover:bg-emerald-600 border border-[#1e2233] px-6 py-2 rounded-xl text-sm font-bold transition-all">
-                <RefreshCw className="w-4 h-4 inline-block mr-1" /> รีเฟรชข้อมูล
-              </button>
-            </div>
-
-            <div className="bg-[#151923] border border-[#1e2233] rounded-3xl shadow-xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-[#1c212d] text-gray-400 text-sm border-b border-[#1e2233]">
-                    <tr>
-                      <th className="p-5 font-semibold">อีเมล (Email)</th>
-                      <th className="p-5 font-semibold">ชื่อ - นามสกุล</th>
-                      <th className="p-5 font-semibold">รหัสประจำตัว</th>
-                      <th className="p-5 font-semibold text-center">บทบาท (Role)</th>
+          <div className="animate-fadeIn space-y-6">
+            <h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">จัดการผู้ใช้งาน (User Management)</h2>
+            <div className="bg-[#0f0714] border border-rose-900/40 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.02)] overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-[#160a1d] text-rose-400 text-xs uppercase tracking-widest border-b border-rose-900/30">
+                  <tr>
+                    <th className="p-5 font-bold">อีเมล (Email)</th>
+                    <th className="p-5 font-bold">ชื่อ - นามสกุล</th>
+                    <th className="p-5 font-bold">รหัสประจำตัว</th>
+                    <th className="p-5 font-bold text-center">บทบาท</th>
+                    <th className="p-5 font-bold text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-rose-900/20">
+                  {userList.map((user) => (
+                    <tr key={user.email} className="hover:bg-white/5 transition-colors group">
+                      <td className="p-5 font-mono text-gray-300 text-sm">{user.email}</td>
+                      <td className="p-5 font-bold text-white">{user.name}</td>
+                      <td className="p-5 text-gray-400 font-mono text-sm">{user.userId}</td>
+                      <td className="p-5 text-center">
+                        <span className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider ${user.role === 'teacher' ? 'bg-purple-900/40 text-purple-400 border border-purple-500/30' : 'bg-blue-900/40 text-blue-400 border border-blue-500/30'}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="p-5 text-center space-x-3">
+                        <button onClick={() => { setEditUser(user); setEditForm({ name: user.name, userId: user.userId, role: user.role }); }} className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteUser(user.email)} disabled={actionLoading} className="p-2 rounded-lg bg-rose-950/50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-transparent hover:border-rose-400">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#1e2233]">
-                    {userList.length > 0 ? (
-                      userList.map((user) => (
-                        <tr key={user.email} className="hover:bg-[#1c212d] transition-colors">
-                          <td className="p-5 font-mono text-emerald-400 text-sm">{user.email}</td>
-                          <td className="p-5 font-bold text-white">{user.name}</td>
-                          <td className="p-5 text-gray-300 font-mono">{user.userId}</td>
-                          <td className="p-5 text-center">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${user.role === 'teacher' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
-                              {user.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="p-10 text-center text-gray-500">
-                          ยังไม่มีผู้ใช้ลงทะเบียนในฐานข้อมูล Supabase (ตาราง <code>users</code>)
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-      </div>
+        {/* Rooms Tab */}
+        {activeTab === 'rooms' && (
+          <div className="animate-fadeIn space-y-6">
+            <h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">ห้องเรียนสด (Active Rooms)</h2>
+            <div className="bg-[#0f0714] border border-rose-900/40 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.02)] overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-[#160a1d] text-rose-400 text-xs uppercase tracking-widest border-b border-rose-900/30">
+                  <tr>
+                    <th className="p-5 font-bold">รหัสห้อง (Join Code)</th>
+                    <th className="p-5 font-bold">วิชา</th>
+                    <th className="p-5 font-bold">อาจารย์ผู้สอน</th>
+                    <th className="p-5 font-bold text-center">นศ. (คน)</th>
+                    <th className="p-5 font-bold text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-rose-900/20">
+                  {activeRooms.map((room) => (
+                    <tr key={room.id} className="hover:bg-white/5 transition-colors">
+                      <td className="p-5 font-black text-emerald-400 text-lg tracking-widest">{room.id}</td>
+                      <td className="p-5">
+                        <p className="font-bold text-white">{room.settings?.courseCode}</p>
+                        <p className="text-xs text-gray-400 mt-1">{room.settings?.name}</p>
+                      </td>
+                      <td className="p-5 text-gray-300 font-medium">{room.settings?.teacherName}</td>
+                      <td className="p-5 text-center font-bold text-xl text-blue-400">{room.students?.length || 0}</td>
+                      <td className="p-5 text-center">
+                        <button onClick={() => handleForceCloseRoom(room.id)} disabled={actionLoading} className="px-4 py-2 rounded-lg bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold uppercase tracking-wider transition-all shadow-[0_0_10px_rgba(225,29,72,0.2)]">
+                          Force Close
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {activeRooms.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-gray-500 font-medium">ไม่มีห้องเรียนที่กำลังเปิดสอน</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* History Tab */}
+        {activeTab === 'history' && (
+          <div className="animate-fadeIn space-y-6">
+            <h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">ประวัติคลาส (History Records)</h2>
+            <div className="bg-[#0f0714] border border-rose-900/40 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.02)] overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-[#160a1d] text-rose-400 text-xs uppercase tracking-widest border-b border-rose-900/30">
+                  <tr>
+                    <th className="p-5 font-bold">วันที่ / เวลา</th>
+                    <th className="p-5 font-bold">วิชา</th>
+                    <th className="p-5 font-bold">อาจารย์ผู้สอน</th>
+                    <th className="p-5 font-bold text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-rose-900/20">
+                  {historyRecords.map((rec) => (
+                    <tr key={rec.id} className="hover:bg-white/5 transition-colors">
+                      <td className="p-5">
+                        <p className="font-bold text-white">{rec.dateStr}</p>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(rec.timestamp).toLocaleString('th-TH')}</p>
+                      </td>
+                      <td className="p-5 font-bold text-blue-400">{rec.courseCode}</td>
+                      <td className="p-5 text-gray-300">{rec.teacherName}</td>
+                      <td className="p-5 text-center">
+                        <button onClick={() => handleDeleteHistory(rec.id)} disabled={actionLoading} className="p-2 rounded-lg bg-rose-950/50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-transparent hover:border-rose-400">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {historyRecords.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="p-10 text-center text-gray-500 font-medium">ไม่มีประวัติการสอน</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Edit User Modal */}
+        {editUser && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-[#0f0714] border border-rose-900/50 p-8 rounded-3xl shadow-[0_0_50px_rgba(225,29,72,0.15)] w-full max-w-md animate-scaleIn">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-black text-white">แก้ไขข้อมูลผู้ใช้</h3>
+                <button onClick={() => setEditUser(null)} className="text-gray-500 hover:text-white"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 block">อีเมล</label>
+                  <input type="text" value={editUser.email} disabled className="w-full bg-black/50 border border-gray-800 rounded-xl px-4 py-3 text-gray-500 font-mono text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 block">ชื่อ-นามสกุล</label>
+                  <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full bg-white/5 border border-rose-900/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors font-bold" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 block">รหัสประจำตัว</label>
+                  <input type="text" value={editForm.userId} onChange={e => setEditForm({...editForm, userId: e.target.value})} className="w-full bg-white/5 border border-rose-900/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors font-mono" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 block">บทบาท</label>
+                  <select value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full bg-[#160a1d] border border-rose-900/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors font-bold appearance-none">
+                    <option value="student">นักศึกษา (Student)</option>
+                    <option value="teacher">อาจารย์ (Teacher)</option>
+                  </select>
+                </div>
+                <div className="pt-4 flex gap-4">
+                  <button onClick={() => setEditUser(null)} className="flex-1 py-3 rounded-xl bg-gray-800 text-white font-bold hover:bg-gray-700 transition-colors">ยกเลิก</button>
+                  <button onClick={handleSaveEditUser} disabled={actionLoading} className="flex-1 py-3 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-500 transition-colors shadow-[0_0_20px_rgba(225,29,72,0.4)]">บันทึก</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

@@ -154,6 +154,22 @@ export async function upsertUser(user: UserProfile): Promise<boolean> {
   }
 }
 
+
+export async function deleteUser(email: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const { error } = await supabase.from('users').delete().eq('email', email);
+    if (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Exception deleting user:", err);
+    return false;
+  }
+}
+
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
     const { data, error } = await supabase
