@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Pin, Smartphone, Lock, CheckCircle2, Ban, Sparkles, MapPin, LogOut, X, Building, MessageSquare, Clock, Hourglass, RefreshCw, Inbox, Camera, Calendar, BarChart2, BookOpen, Home, Trash2, TrendingDown, Users, Paperclip } from 'lucide-react';
+import { AlertCircle, Pin, Smartphone, Lock, CheckCircle2, Ban, Sparkles, MapPin, LogOut, X, Building, MessageSquare, Clock, Hourglass, RefreshCw, Inbox, Camera, Calendar, BarChart2, BookOpen, Home, Trash2, TrendingDown, Users, Paperclip, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react'; 
+import { downloadCSV } from '../../lib/csvHelper';
 
 // === นำเข้า Supabase ===
 import { 
@@ -56,6 +57,28 @@ export default function TeacherDashboard() {
 
   // State: หน้าสถิติ
   const [selectedStatsCourse, setSelectedStatsCourse] = useState<string | null>(null);
+
+  // === ส่งออก CSV ===
+  const handleExportCourseCSV = () => {
+    if (!selectedStatsCourse) return;
+    const stats = getCurrentCourseStats();
+    
+    const headers = ["รหัสนักศึกษา", ...stats.sessions.map((s: any) => `ครั้งที่ ${s.sessionNum}`), "รวมมาเรียน (ครั้ง)"];
+    
+    const rows = stats.students.map((student: any) => {
+      const row = [student.studentId];
+      let presentCount = 0;
+      stats.sessions.forEach((s: any) => {
+        const hasAttended = s.studentsData?.some((sd: any) => sd.studentId === student.studentId);
+        row.push(hasAttended ? "มา" : "ขาด");
+        if (hasAttended) presentCount++;
+      });
+      row.push(presentCount);
+      return row;
+    });
+
+    downloadCSV(`attendance_${selectedStatsCourse}`, headers, rows);
+  };
   const [selectedSessionView, setSelectedSessionView] = useState<string>('all');
   const [configured, setConfigured] = useState(true);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'requesting' | 'ready' | 'denied'>('idle');
@@ -1021,6 +1044,10 @@ export default function TeacherDashboard() {
                     <button onClick={() => setSelectedStatsCourse(null)} className="text-gray-400 hover:text-white bg-[#11141c] px-4 py-2 rounded-lg font-bold"> กลับ</button>
                     <div><h3 className="font-bold text-xl text-white">ประวัติวิชา {selectedStatsCourse}</h3><p className="text-xs text-gray-400 mt-1">เรียงตามรหัสนักศึกษา และแยกรายครั้ง</p></div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleExportCourseCSV} className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                      <Download className="w-4 h-4 inline-block mr-1" /> ส่งออก CSV
+                    </button>
                   <select 
                     value={selectedSessionView} onChange={(e) => setSelectedSessionView(e.target.value)}
                     className="bg-[#11141c] border border-[#2a3041] focus:border-blue-500 text-blue-400 font-bold rounded-xl px-4 py-2 outline-none cursor-pointer"
@@ -1030,6 +1057,7 @@ export default function TeacherDashboard() {
                        <option key={rec.id} value={rec.sessionNum}>ดูรายละเอียดเจาะจง รอบที่ {rec.sessionNum}</option>
                     ))}
                   </select>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto flex-1 p-6">

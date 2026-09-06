@@ -5,13 +5,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   AlertCircle, ShieldAlert, LogOut, RefreshCw, Users, Database, 
-  Trash2, Edit, Power, Activity, Server, History, PlaySquare, X
+  Trash2, Edit, Power, Activity, Server, History, PlaySquare, X, Download
 } from 'lucide-react';
 import { 
   getActiveRooms, getAllHistory, getAllUsers,
   deleteUser, upsertUser, deleteRoom, deleteHistory,
   isSupabaseConfigured, RoomRecord, HistoryRecord, UserProfile
 } from '../lib/supabase';
+import { downloadCSV } from '../lib/csvHelper';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -60,6 +61,20 @@ export default function AdminDashboard() {
     }
     fetchAdminData();
   }, [router]);
+
+  
+  
+  const handleExportHistory = () => {
+    const headers = ["วันที่เวลา", "รหัสวิชา", "ชื่อวิชา", "อาจารย์ผู้สอน", "รหัสห้อง"];
+    const rows = historyRecords.map(h => [new Date(h.timestamp).toLocaleString('th-TH'), h.courseCode, h.courseName, h.teacherName, h.id]);
+    downloadCSV("checkin_history_export", headers, rows);
+  };
+
+  const handleExportUsers = () => {
+    const headers = ["อีเมล", "ชื่อ-นามสกุล", "รหัสประจำตัว", "บทบาท"];
+    const rows = userList.map(u => [u.email, u.name, u.userId, u.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา']);
+    downloadCSV("checkin_users_export", headers, rows);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('current_user');
@@ -241,7 +256,12 @@ export default function AdminDashboard() {
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="animate-fadeIn space-y-6">
-            <h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">จัดการผู้ใช้งาน (User Management)</h2>
+            <div className="flex justify-between items-end">
+<h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">จัดการผู้ใช้งาน (User Management)</h2>
+            <button onClick={handleExportUsers} className="bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-400 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] ml-auto">
+              <Download className="w-4 h-4 mr-2" /> ส่งออกข้อมูล (CSV)
+            </button>
+</div>
             <div className="bg-[#0f0714] border border-rose-900/40 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.02)] overflow-hidden">
               <table className="w-full text-left">
                 <thead className="bg-[#160a1d] text-rose-400 text-xs uppercase tracking-widest border-b border-rose-900/30">
@@ -326,7 +346,12 @@ export default function AdminDashboard() {
         {/* History Tab */}
         {activeTab === 'history' && (
           <div className="animate-fadeIn space-y-6">
-            <h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">ประวัติคลาส (History Records)</h2>
+            <div className="flex justify-between items-end">
+<h2 className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">ประวัติคลาส (History Records)</h2>
+            <button onClick={handleExportHistory} className="bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-400 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center shadow-[0_0_15px_rgba(16,185,129,0.2)] ml-auto">
+              <Download className="w-4 h-4 mr-2" /> ส่งออกประวัติ (CSV)
+            </button>
+</div>
             <div className="bg-[#0f0714] border border-rose-900/40 rounded-2xl shadow-[inset_0_0_30px_rgba(225,29,72,0.02)] overflow-hidden">
               <table className="w-full text-left">
                 <thead className="bg-[#160a1d] text-rose-400 text-xs uppercase tracking-widest border-b border-rose-900/30">
