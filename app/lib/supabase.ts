@@ -70,7 +70,7 @@ export interface StudentData {
   joinTime?: string;
   firstJoinTime?: string;
   lastSeen?: string;
-  totalActiveSeconds?: number;
+  totalActiveSeconds?: number; greenSeconds?: number; yellowSeconds?: number; redSeconds?: number;
   lastTick?: number;
   reconnectCount?: number;
   leaveReason?: string;

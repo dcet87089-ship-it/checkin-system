@@ -491,9 +491,11 @@ export default function TeacherDashboard() {
   };
 
   const formatDuration = (totalSeconds?: number) => {
-    if (!totalSeconds || totalSeconds <= 0) return "0 นาที";
-    const mins = Math.floor(totalSeconds / 60);
+    if (!totalSeconds || totalSeconds <= 0) return "0 วิ";
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
+    if (hrs > 0) return `${hrs} ชม. ${mins} นาที`;
     if (mins === 0) return `${secs} วิ`;
     return `${mins} นาที ${secs} วิ`;
   };
@@ -1117,7 +1119,7 @@ export default function TeacherDashboard() {
                             return (
                               <tr key={std.id} className="hover:bg-[#1c2130]">
                                 <td className="py-4 font-mono text-gray-300">{std.id}</td><td className="py-4 font-bold text-white">{std.name}</td><td className="py-4 text-center text-blue-300 font-mono">{attendedRecord.joinTime}</td>
-                                <td className="py-4 text-center font-bold text-white">{minsInClass} <span className="font-normal text-gray-300 text-xs">นาที</span></td><td className="py-4 text-center"><span className={`px-3 py-1 border rounded-lg text-xs font-bold ${colorText}`}>{label}</span></td>
+                                <td className="py-4 text-center"><div className="font-bold text-white mb-1">{minsInClass} <span className="font-normal text-gray-300 text-xs">นาที</span></div><div className="text-[10px] text-gray-400 flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center items-center"><span className="text-[#00b87c]">🟢 {formatDuration(attendedRecord.greenSeconds)}</span><span className="text-amber-500">🟡 {formatDuration(attendedRecord.yellowSeconds)}</span><span className="text-rose-500">🔴 {formatDuration(attendedRecord.redSeconds)}</span></div></td><td className="py-4 text-center"><span className={`px-3 py-1 border rounded-lg text-xs font-bold ${colorText}`}>{label}</span></td>
                               </tr>
                             );
                           });

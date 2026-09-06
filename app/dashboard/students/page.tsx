@@ -34,6 +34,9 @@ interface HistoryRecordType {
   status: string;
   type: "success" | "warning" | "error";
   distance?: number;
+  greenSeconds?: number;
+  yellowSeconds?: number;
+  redSeconds?: number;
 }
 
 interface ScheduleItemType {
@@ -66,6 +69,15 @@ function formatActiveDuration(totalSeconds?: number) {
 }
 
 export default function StudentDashboard() {
+  const formatDuration = (totalSeconds?: number) => {
+    if (!totalSeconds || totalSeconds <= 0) return "0 วิ";
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hrs > 0) return `${hrs} ชม. ${mins} นาที`;
+    if (mins === 0) return `${secs} วิ`;
+    return `${mins} นาที ${secs} วิ`;
+  };
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState<'home' | 'schedule' | 'history'>('history');
   const [userData, setUserData] = useState<UserDataType | null>(null);
@@ -240,6 +252,19 @@ export default function StudentDashboard() {
           if (s.studentId === userData.userId) {
             const deltaSec = s.lastTick ? Math.min(30, Math.max(0, Math.floor((nowMs - s.lastTick) / 1000))) : 5;
             const accumulated = (s.totalActiveSeconds || 0) + deltaSec;
+            
+            let green = s.greenSeconds || 0;
+            let yellow = s.yellowSeconds || 0;
+            let red = s.redSeconds || 0;
+            
+            if (curStatus.includes("ปกติ") || curStatus.includes("เข้าเรียน")) {
+              green += deltaSec;
+            } else if (curStatus.includes("เฝ้าระวัง")) {
+              yellow += deltaSec;
+            } else {
+              red += deltaSec;
+            }
+
             return { 
               ...s, 
               lat: isGpsActive ? (myLocation.lat || s.lat) : 0,
@@ -248,6 +273,9 @@ export default function StudentDashboard() {
               gpsActive: isGpsActive && myLocation.lat !== 0,
               status: curStatus,
               totalActiveSeconds: accumulated,
+              greenSeconds: green,
+              yellowSeconds: yellow,
+              redSeconds: red,
               lastTick: nowMs,
               lastSeen: currentTime 
             };
@@ -1164,6 +1192,7 @@ export default function StudentDashboard() {
                                         {record.type === 'warning' && <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">⚠️ {record.status} {record.distance && `(${record.distance}m)`}</span>}
                                         {record.type === 'error' && <span className="inline-flex items-center justify-center bg-rose-500/10 text-rose-500 border border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">🚫 {record.status}</span>}
                                       </div>
+                                      <div className="text-[10px] text-gray-400 mt-2 flex gap-2 justify-center flex-wrap"><span className="text-[#00b87c]">🟢 {formatDuration(record.greenSeconds)}</span><span className="text-amber-500">🟡 {formatDuration(record.yellowSeconds)}</span><span className="text-rose-500">🔴 {formatDuration(record.redSeconds)}</span></div>
                                    </td>
                                 </tr>
                              ))
